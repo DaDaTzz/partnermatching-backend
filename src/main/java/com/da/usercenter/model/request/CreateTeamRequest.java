@@ -1,8 +1,5 @@
 package com.da.usercenter.model.request;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -20,6 +17,11 @@ public class CreateTeamRequest implements Serializable {
      * 队伍名称
      */
     private String name;
+
+    /**
+     * 队伍头像
+     */
+    private String profilePhoto;
 
     /**
      * 描述

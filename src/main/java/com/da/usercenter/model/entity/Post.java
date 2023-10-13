@@ -1,63 +1,61 @@
 package com.da.usercenter.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
 
 /**
- * 队伍
- * @TableName team
+ * 帖子
+ *
+ * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
-@TableName(value ="team")
+@TableName(value = "post")
 @Data
-public class Team implements Serializable {
+public class Post implements Serializable {
+
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
-     * 用户id（队长id）
+     * 标题
+     */
+    private String title;
+
+    /**
+     * 图片
+     */
+    private String img;
+
+    /**
+     * 内容
+     */
+    private String content;
+
+    /**
+     * 标签列表 json
+     */
+    private String tags;
+
+    /**
+     * 点赞数
+     */
+    private Integer thumbNum;
+
+    /**
+     * 收藏数
+     */
+    private Integer favourNum;
+
+    /**
+     * 创建用户 id
      */
     private Long userId;
-
-    /**
-     * 队伍头像
-     */
-    private String profilePhoto;
-
-    /**
-     * 队伍名称
-     */
-    private String name;
-
-    /**
-     * 描述
-     */
-    private String description;
-
-    /**
-     * 过期时间
-     */
-    private Date expireTime;
-
-    /**
-     * 密码
-     */
-    private String password;
-
-    /**
-     * 最大人数
-     */
-    private Integer maxNum;
-
-    /**
-     * 0-公开 1-私有 2-加密
-     */
-    private Integer states;
 
     /**
      * 创建时间

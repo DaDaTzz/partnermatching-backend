@@ -24,7 +24,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         // 设置允许跨域请求的域名
                         .allowedOrigins("*")
                         // 再次加入前端Origin  localhost！=127.0.0.1
-                        .allowedOrigins("http://127.0.0.1:8080")
+                        .allowedOrigins("http://127.0.0.1:5173")
                         // 是否允许证书（cookies）
                         .allowCredentials(true)
                         // 设置允许的方法

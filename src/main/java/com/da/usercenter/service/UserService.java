@@ -2,9 +2,8 @@ package com.da.usercenter.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.model.entity.User;
-import com.da.usercenter.model.request.AddFriendRequest;
+import com.da.usercenter.model.request.AddLoveRequest;
 import com.da.usercenter.model.request.DeleteFriendRequest;
 import com.da.usercenter.model.request.UpdateTagRequest;
 import com.da.usercenter.model.vo.UserVO;
@@ -48,14 +47,6 @@ public interface UserService extends IService<User> {
      */
     List<User> searchUser(String nickName, HttpServletRequest request);
 
-    /**
-     * 删除用户
-     *
-     * @param user 用户信息
-     * @param request 客户端请求对象
-     * @return 成功 or 失败
-     */
-    boolean deleteUser(User user, HttpServletRequest request);
 
     /**
      * 管理员验证
@@ -84,6 +75,23 @@ public interface UserService extends IService<User> {
      * @return 当前用户信息
      */
     User getCurrentUser(HttpServletRequest request);
+
+    /**
+     * 获取脱敏的用户信息
+     *
+     * @param user
+     * @return
+     */
+    UserVO getUserVO(User user);
+
+
+    /**
+     * 获取当前登录用户（允许未登录）
+     *
+     * @param request
+     * @return
+     */
+    User getLoginUserPermitNull(HttpServletRequest request);
 
     /**
      * 注销
@@ -122,14 +130,14 @@ public interface UserService extends IService<User> {
      * @param request 客户端请求对象
      * @return 用户信息
      */
-    List<User> matchUsers(long num, HttpServletRequest request);
+    List<User> matchUsers(long num,String nickname, HttpServletRequest request);
 
     /**
      * 获取好友列表
      * @param request
      * @return
      */
-    List<UserVO> getFriends(HttpServletRequest request);
+    List<UserVO> getLoves(HttpServletRequest request);
 
     /**
      * 添加好友
@@ -137,15 +145,7 @@ public interface UserService extends IService<User> {
      * @param request
      * @return
      */
-    Boolean addFriend(AddFriendRequest addFriendRequest, HttpServletRequest request);
-
-    /**
-     * 删除好友
-     * @param deleteFriendRequest
-     * @param request
-     * @return
-     */
-    Boolean deleteFriend(DeleteFriendRequest deleteFriendRequest, HttpServletRequest request);
+    Boolean addLove(AddLoveRequest addFriendRequest, HttpServletRequest request);
 
     /**
      * 更新标签
@@ -154,5 +154,7 @@ public interface UserService extends IService<User> {
      * @return
      */
     Boolean updateTag(UpdateTagRequest updateTagRequest, HttpServletRequest request);
+
+    List<UserVO> getFans(HttpServletRequest request);
 }
 

@@ -16,10 +16,11 @@
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
+            <result property="profilePhoto" column="profile_photo" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,user_id,name,
+        id,user_id,name,profile_photo
         description,expire_time,password,
         max_num,states,create_time,
         update_time,is_delete

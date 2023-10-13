@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.mapper.UserMapper;
-import com.da.usercenter.model.dto.TeamQuery;
+import com.da.usercenter.model.dto.team.TeamQuery;
 import com.da.usercenter.model.entity.Team;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.entity.UserTeam;
@@ -24,7 +24,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -346,7 +345,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         Team team = new Team();
         BeanUtils.copyProperties(teamQuery, team);
         QueryWrapper<Team> queryWrapper = new QueryWrapper<>();
-        return this.page(new Page<>(teamQuery.getPageNum(), teamQuery.getPageSize()), queryWrapper);
+        return this.page(new Page<>(teamQuery.getCurrent(), teamQuery.getPageSize()), queryWrapper);
     }
 
     /**

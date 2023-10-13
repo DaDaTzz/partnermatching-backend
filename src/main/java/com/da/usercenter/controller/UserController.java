@@ -67,8 +67,8 @@ public class UserController{
         if(safeUser == null){
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
+        // 返回token
         String token = TokenUtils.getToken(String.valueOf(safeUser.getId()));
-        // 将用户信息存入redis
         return ResponseResult.success(safeUser, token);
     }
 
@@ -108,17 +108,6 @@ public class UserController{
         return ResponseResult.success(userPage);
     }
 
-    /**
-     * 删除用户
-     * @param user
-     * @param request
-     * @return
-     */
-    @PostMapping("/delete")
-    public ResponseResult<Boolean> deleteUser(@RequestBody User user, HttpServletRequest request){
-        boolean result = userService.deleteUser(user, request);
-        return ResponseResult.success(result);
-    }
 
     /**
      * 获取当前用户信息
@@ -167,46 +156,41 @@ public class UserController{
      * @return
      */
     @GetMapping("/match")
-    public ResponseResult<List<User>> matchUsers(long num, HttpServletRequest request){
-        List<User> userList = userService.matchUsers(num, request);
+    public ResponseResult<List<User>> matchUsers(long num, String nickname,HttpServletRequest request){
+        List<User> userList = userService.matchUsers(num, nickname,request);
         return ResponseResult.success(userList);
     }
 
     /**
-     * 获取好友信息
+     * 获取已关注的用户列表
      * @param request
      * @return
      */
-    @GetMapping("/search/friends")
-    public ResponseResult<List<UserVO>> getFriends(HttpServletRequest request){
-        List<UserVO> friendList = userService.getFriends(request);
-        return ResponseResult.success(friendList);
+    @GetMapping("/get/love")
+    public ResponseResult<List<UserVO>> getLoves(HttpServletRequest request){
+        List<UserVO> lovesList = userService.getLoves(request);
+        return ResponseResult.success(lovesList);
+    }
+
+    @GetMapping("/get/fans")
+    public ResponseResult<List<UserVO>> getFans(HttpServletRequest request){
+        List<UserVO> fansList = userService.getFans(request);
+        return ResponseResult.success(fansList);
     }
 
 
     /**
-     * 加好友
-     * @param addFriendRequest
+     * 关注 / 取关
+     * @param addFansRequest
      * @param request
      * @return
      */
-    @PostMapping("/addFriend")
-    public ResponseResult<Boolean> addFriend(@RequestBody AddFriendRequest addFriendRequest, HttpServletRequest request){
-        Boolean res = userService.addFriend(addFriendRequest, request);
+    @PostMapping("/addLove")
+    public ResponseResult<Boolean> addLove(@RequestBody AddLoveRequest addFansRequest, HttpServletRequest request){
+        Boolean res = userService.addLove(addFansRequest, request);
         return ResponseResult.success(res);
     }
 
-    /**
-     * 删除好友
-     * @param deleteFriendRequest
-     * @param request
-     * @return
-     */
-    @PostMapping("/deleteFriend")
-    public ResponseResult<Boolean> deleteFriend(@RequestBody DeleteFriendRequest deleteFriendRequest, HttpServletRequest request){
-        Boolean res = userService.deleteFriend(deleteFriendRequest, request);
-        return ResponseResult.success(res);
-    }
 
     /**
      * 更新标签

@@ -1,25 +1,34 @@
 package com.da.usercenter.common;
 
+import com.da.usercenter.constant.CommonConstant;
 import lombok.Data;
 
-import java.io.Serializable;
-
 /**
- * 通用分页请求参数
+ * 分页请求
+ *
+ * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
 @Data
-public class PageRequest implements Serializable {
-    private static final long serialVersionUID = -874299309843979195L;
+public class PageRequest {
+
     /**
-     * 第几页
+     * 当前页号
      */
-    protected int pageNum = 1;
+    private long current = 1;
+
     /**
-     * 页面记录条数
+     * 页面大小
      */
-    protected int pageSize = 10;
+    private long pageSize = 10;
 
-    
+    /**
+     * 排序字段
+     */
+    private String sortField;
 
-
+    /**
+     * 排序顺序（默认升序）
+     */
+    private String sortOrder = CommonConstant.SORT_ORDER_ASC;
 }

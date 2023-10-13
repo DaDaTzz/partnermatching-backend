@@ -35,9 +35,15 @@ public class TeamUserVO implements Serializable {
     private String description;
 
     /**
+     * 队伍头像
+     */
+    private String profilePhoto;
+
+    /**
      * 过期时间
      */
     private Date expireTime;
+
 
 
     /**
@@ -65,6 +71,7 @@ public class TeamUserVO implements Serializable {
      * 创建人信息
      */
     private UserVO createUser;
+
 
     /**
      * 加入队伍用户信息

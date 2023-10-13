@@ -1,12 +1,12 @@
 package com.da.usercenter;
 
 import cn.hutool.core.date.StopWatch;
-import com.da.usercenter.mapper.UserFriendMapper;
+import com.da.usercenter.mapper.UserFollowsMapper;
 import com.da.usercenter.mapper.UserMapper;
 import com.da.usercenter.model.entity.User;
-import com.da.usercenter.model.entity.UserFriend;
+import com.da.usercenter.model.entity.UserFollows;
 import com.da.usercenter.model.entity.UserTeam;
-import com.da.usercenter.service.UserFriendService;
+import com.da.usercenter.service.UserFollowsService;
 import com.da.usercenter.service.UserService;
 import com.da.usercenter.service.UserTeamService;
 import com.google.gson.Gson;
@@ -27,9 +27,7 @@ class UserCenterApplicationTests {
     @Resource
     private UserTeamService userTeamService;
     @Resource
-    private UserFriendService userFriendService;
-    @Resource
-    private UserFriendMapper userFriendMapper;
+    private UserFollowsMapper userFollowsMapper;
 
     @Test
     public void testInsertUser(){
@@ -131,24 +129,12 @@ class UserCenterApplicationTests {
 
     @Test
     public void testInsert(){
-        UserFriend userFriend = new UserFriend();
-        userFriend.setUserId(1L);
-        userFriend.setFriendId(2L);
-        userFriendService.save(userFriend);
-        userFriend.setUserId(2L);
-        userFriend.setFriendId(1L);
-        userFriendService.save(userFriend);
+        List<User> fansByUserId = userFollowsMapper.getFansByUserId(1);
+        fansByUserId.forEach(user -> System.out.println(user));
     }
 
 
-    @Test
-    public void testSelect(){
-        // 查询 id 为等于1的用户好友信息
-        List<User> friendList = userFriendMapper.getFriendsByUserId(1L);
-        friendList.forEach(user -> {
-            System.out.println(user);
-        });
-    }
+
 
 
 }

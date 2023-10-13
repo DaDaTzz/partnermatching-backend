@@ -1,7 +1,7 @@
 package com.da.usercenter.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.da.usercenter.model.dto.TeamQuery;
+import com.da.usercenter.model.dto.team.TeamQuery;
 import com.da.usercenter.model.entity.Team;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.da.usercenter.model.request.*;

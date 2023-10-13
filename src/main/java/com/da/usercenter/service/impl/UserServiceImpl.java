@@ -2,21 +2,20 @@ package com.da.usercenter.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.exception.BusinessException;
-import com.da.usercenter.mapper.UserFriendMapper;
+import com.da.usercenter.mapper.UserFollowsMapper;
 import com.da.usercenter.mapper.UserMapper;
 import com.da.usercenter.model.entity.User;
-import com.da.usercenter.model.entity.UserFriend;
-import com.da.usercenter.model.request.AddFriendRequest;
+import com.da.usercenter.model.entity.UserFollows;
+import com.da.usercenter.model.request.AddLoveRequest;
 import com.da.usercenter.model.request.DeleteFriendRequest;
 import com.da.usercenter.model.request.UpdateTagRequest;
 import com.da.usercenter.model.vo.UserVO;
-import com.da.usercenter.service.UserFriendService;
+import com.da.usercenter.service.UserFollowsService;
 import com.da.usercenter.service.UserService;
 import com.da.usercenter.utils.AlgorithmUtil;
 import com.da.usercenter.utils.TokenUtils;
@@ -55,7 +54,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private RedisTemplate redisTemplate;
 
     @Resource
-    private UserFriendService userFriendService;
+    private UserFollowsService userFriendService;
 
     /**
      * 盐值，混淆密码
@@ -63,7 +62,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public static final String SALT = "Da";
 
     @Resource
-    private UserFriendMapper userFriendMapper;
+    private UserFollowsMapper userFriendMapper;
 
 
     /**
@@ -121,6 +120,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user.getId();
     }
 
+
+
     /**
      * 登录
      *
@@ -164,6 +165,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return safeUser;
     }
 
+    @Override
+    public UserVO getUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
+
+    /**
+     * 获取当前登录用户（允许未登录）
+     *
+     * @param request
+     * @return
+     */
+    @Override
+    public User getLoginUserPermitNull(HttpServletRequest request) {
+        // 先判断是否已登录
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User currentUser = (User) userObj;
+        if (currentUser == null || currentUser.getId() == 0) {
+            return null;
+        }
+        // 从数据库查询（追求性能的话可以注释，直接走缓存）
+        long userId = currentUser.getId();
+        return this.getById(userId);
+    }
+
     /**
      * 通过昵称查询用户信息
      *
@@ -185,29 +215,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userList.stream().map(this::getSafeUser).collect(Collectors.toList());
     }
 
-    /**
-     * 删除用户
-     *
-     * @param user    用户信息
-     * @param request 客户端请求对象
-     * @return boolean
-     */
-    @Override
-    public boolean deleteUser(User user, HttpServletRequest request) {
-        // 权限校验
-        if (!isAdmin(request)) {
-            throw new BusinessException(ErrorCode.NO_AUTH);
-        }
-        if (user.getId() < 0) {
-            throw new BusinessException(ErrorCode.DATABASE_ERROR, "删除失败");
-        }
-        boolean res = removeById(user.getId());
-        redisTemplate.delete("user:login:" + user.getId());
-        // 更新推荐用户列表 防止脏数据
-        Set<String> keys = redisTemplate.keys("user:recommend:" + "*");
-        redisTemplate.delete(keys);
-        return res;
-    }
+
 
     /**
      * 判断是否为管理员
@@ -416,7 +424,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public List<User> matchUsers(long num, HttpServletRequest request) {
+    public List<User> matchUsers(long num,String nickname, HttpServletRequest request) {
         if (num <= 0 || num > 20) {
             throw new BusinessException(PARAMS_ERROR);
         }
@@ -430,6 +438,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(User::getId, User::getTags);
         queryWrapper.isNotNull(User::getTags);
+        if(StringUtils.isNotBlank(nickname)){
+            queryWrapper.like(User::getNickname, nickname);
+        }
         List<User> userList = this.list(queryWrapper);
         String tags = loginUser.getTags();
         Gson gson = new Gson();
@@ -475,7 +486,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public List<UserVO> getFriends(HttpServletRequest request) {
+    public List<UserVO> getLoves(HttpServletRequest request) {
         // 非空
         if (request == null) {
             throw new BusinessException(NULL_ERROR);
@@ -485,28 +496,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (currentUser == null) {
             throw new BusinessException(NOT_LOGIN);
         }
-        List<User> friends = userFriendMapper.getFriendsByUserId(currentUser.getId());
-        ArrayList<UserVO> friendList = new ArrayList<>();
+        List<User> friends = userFriendMapper.getLovesByUserId(currentUser.getId());
+        ArrayList<UserVO> loveList = new ArrayList<>();
         // 用户信息脱敏
-        for (User friend : friends) {
+        for (User love : friends) {
             UserVO userVO = new UserVO();
-            User safeUser = this.getSafeUser(friend);
+            User safeUser = this.getSafeUser(love);
             BeanUtils.copyProperties(safeUser, userVO);
-            friendList.add(userVO);
+            loveList.add(userVO);
         }
-        return friendList;
+        return loveList;
 
     }
 
 
     /**
-     * 添加好友
+     * 关注/取关
      * @param addFriendRequest
      * @param request
      * @return
      */
     @Override
-    public Boolean addFriend(AddFriendRequest addFriendRequest, HttpServletRequest request) {
+    public Boolean addLove(AddLoveRequest addFriendRequest, HttpServletRequest request) {
         Long id = addFriendRequest.getId();
         if(id == null || id <= 0){
             throw new BusinessException(PARAMS_ERROR);
@@ -515,53 +526,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if(currentUser == null){
             throw new BusinessException(NOT_LOGIN);
         }
-        // 不能添加自己
+        // 不能关注自己
         if(id == currentUser.getId()){
             throw new BusinessException(PARAMS_ERROR, "不能添加自己为好友！");
         }
-        // 不能重复添加
+        // 取关
         long userId = currentUser.getId();
-        LambdaQueryWrapper<UserFriend> userFriendLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        userFriendLambdaQueryWrapper.eq(UserFriend::getUserId, userId).eq(UserFriend::getFriendId, id);
+        LambdaQueryWrapper<UserFollows> userFriendLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        userFriendLambdaQueryWrapper.eq(UserFollows::getUserId, userId).eq(UserFollows::getLoveId, id);
         int count = userFriendService.count(userFriendLambdaQueryWrapper);
         if(count >= 1){
-            throw new BusinessException(PARAMS_ERROR, "该用户已在您的好友列表中");
+            return userFriendService.remove(userFriendLambdaQueryWrapper);
         }
         // 插入数据
-        UserFriend userFriend = new UserFriend();
-        userFriend.setUserId(userId);
-        userFriend.setFriendId(id);
-        return userFriendService.save(userFriend);
+        UserFollows userFollows = new UserFollows();
+        userFollows.setUserId(userId);
+        userFollows.setLoveId(id);
+        return userFriendService.save(userFollows);
     }
 
-
-    /**
-     * 删除好友
-     * @param deleteFriendRequest
-     * @param request
-     * @return
-     */
-    @Override
-    public Boolean deleteFriend(DeleteFriendRequest deleteFriendRequest, HttpServletRequest request) {
-        Long id = deleteFriendRequest.getId();
-        if(id == null || id <= 0){
-            throw new BusinessException(PARAMS_ERROR);
-        }
-        User currentUser = this.getCurrentUser(request);
-        if(currentUser == null){
-            throw new BusinessException(NOT_LOGIN);
-        }
-        // 是否在好友列表中
-        long userId = currentUser.getId();
-        LambdaQueryWrapper<UserFriend> userFriendLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        userFriendLambdaQueryWrapper.eq(UserFriend::getUserId, userId).eq(UserFriend::getFriendId, id);
-        int count = userFriendService.count(userFriendLambdaQueryWrapper);
-        if(count <= 0){
-            throw new BusinessException(PARAMS_ERROR,"对方不是您的好友，无法删除！");
-        }
-        // 删除
-        return userFriendService.remove(userFriendLambdaQueryWrapper);
-    }
 
     /**
      * 更新标签
@@ -599,6 +582,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             redisTemplate.delete(keys);
         }
         return false;
+    }
+
+    @Override
+    public List<UserVO> getFans(HttpServletRequest request) {
+        // 非空
+        if (request == null) {
+            throw new BusinessException(NULL_ERROR);
+        }
+        // 是否登录
+        User currentUser = this.getCurrentUser(request);
+        if (currentUser == null) {
+            throw new BusinessException(NOT_LOGIN);
+        }
+        long id = currentUser.getId();
+        List<User> friends = userFriendMapper.getFansByUserId(id);
+        ArrayList<UserVO> loveList = new ArrayList<>();
+        // 用户信息脱敏
+        for (User love : friends) {
+            UserVO userVO = new UserVO();
+            User safeUser = this.getSafeUser(love);
+            BeanUtils.copyProperties(safeUser, userVO);
+            loveList.add(userVO);
+        }
+        return loveList;
     }
 
 
