@@ -1,17 +1,23 @@
 package com.da.usercenter;
 
 import cn.hutool.core.date.StopWatch;
+import com.da.usercenter.common.PageRequest;
+import com.da.usercenter.manager.RedisLimiterManager;
 import com.da.usercenter.mapper.UserFollowsMapper;
 import com.da.usercenter.mapper.UserMapper;
 import com.da.usercenter.model.entity.User;
-import com.da.usercenter.model.entity.UserFollows;
 import com.da.usercenter.model.entity.UserTeam;
-import com.da.usercenter.service.UserFollowsService;
 import com.da.usercenter.service.UserService;
 import com.da.usercenter.service.UserTeamService;
+import com.da.usercenter.utils.IpUtils;
+import com.da.usercenter.utils.MailUtils;
+import com.da.usercenter.utils.SMSUtils;
+import com.da.usercenter.utils.ValidateCodeUtils;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -28,6 +34,9 @@ class UserCenterApplicationTests {
     private UserTeamService userTeamService;
     @Resource
     private UserFollowsMapper userFollowsMapper;
+
+    @Resource
+    private JavaMailSender javaMailSender;
 
     @Test
     public void testInsertUser(){
@@ -133,6 +142,27 @@ class UserCenterApplicationTests {
         fansByUserId.forEach(user -> System.out.println(user));
     }
 
+
+    @Test
+    public void testSendMail(){
+        String code = "6666";// 验证码
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setSubject("【测试验证码】验证消息"); // 发送邮件的标题
+        message.setText("登录操作，验证码："+ code + "，切勿将验证码泄露给他人，本条验证码有效期2分钟。"); // 发送邮件的内容
+        message.setTo("2781335197@qq.com"); // 指定要接收邮件的用户邮箱账号
+        message.setFrom("1349190697@qq.com"); // 发送邮件的邮箱账号，注意一定要和配置文件中的一致！
+        javaMailSender.send(message); // 调用send方法发送邮件即可
+    }
+
+
+    @Test
+    public void testSendCode(){
+        RedisLimiterManager redisLimiterManager = new RedisLimiterManager();
+        String code = ValidateCodeUtils.generateValidateCode(4).toString();
+        // 调用阿里云api发送短信验证码
+        System.out.println("生成的验证码为：" + code);
+        SMSUtils.sendMessage("瑞吉外卖", "SMS_460765534", "18370952133", "6666");
+    }
 
 
 

@@ -3,9 +3,8 @@ package com.da.usercenter.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.da.usercenter.model.entity.User;
-import com.da.usercenter.model.request.AddLoveRequest;
-import com.da.usercenter.model.request.DeleteFriendRequest;
-import com.da.usercenter.model.request.UpdateTagRequest;
+import com.da.usercenter.model.dto.user.AddLoveRequest;
+import com.da.usercenter.model.dto.user.UpdateTagRequest;
 import com.da.usercenter.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +26,7 @@ public interface UserService extends IService<User> {
      * @param checkPassword 校验密码
      * @return 用户id
      */
-    Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname);
+    Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname,String phone,String inputCode);
 
     /**
      * 用户登录

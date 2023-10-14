@@ -1,4 +1,4 @@
-package com.da.usercenter.model.request;
+package com.da.usercenter.model.dto.user;
 
 import lombok.Data;
 
@@ -32,5 +32,15 @@ public class UserRegisterRequest implements Serializable {
      * 二次输入密码
      */
     private String checkPassword;
+
+    /**
+     * 手机号
+     */
+    private String phone;
+
+    /**
+     * 输入的验证码
+     */
+    private String inputCode;
 
 }

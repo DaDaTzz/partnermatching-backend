@@ -1,4 +1,4 @@
-package com.da.usercenter.model.request;
+package com.da.usercenter.model.dto.user;
 
 import lombok.Data;
 import java.io.Serializable;

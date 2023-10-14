@@ -11,14 +11,15 @@ import com.da.usercenter.mapper.UserFollowsMapper;
 import com.da.usercenter.mapper.UserMapper;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.entity.UserFollows;
-import com.da.usercenter.model.request.AddLoveRequest;
-import com.da.usercenter.model.request.DeleteFriendRequest;
-import com.da.usercenter.model.request.UpdateTagRequest;
+import com.da.usercenter.model.dto.user.AddLoveRequest;
+import com.da.usercenter.model.dto.user.UpdateTagRequest;
 import com.da.usercenter.model.vo.UserVO;
 import com.da.usercenter.service.UserFollowsService;
 import com.da.usercenter.service.UserService;
 import com.da.usercenter.utils.AlgorithmUtil;
+import com.da.usercenter.utils.SMSUtils;
 import com.da.usercenter.utils.TokenUtils;
+import com.da.usercenter.utils.ValidateCodeUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import javafx.util.Pair;
@@ -74,9 +75,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 创建成功的用户 id
      */
     @Override
-    public Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname) {
+    public Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname,String phone,String inputCode) {
         // 非空校验
-        if (StrUtil.isBlank(loginAccount) || StrUtil.isBlank(loginPassword) || StrUtil.isBlank(checkPassword) || StrUtil.isBlank(nickname)) {
+        if (StrUtil.isBlank(loginAccount) || StrUtil.isBlank(loginPassword) || StrUtil.isBlank(checkPassword) || StrUtil.isBlank(nickname) || StrUtil.isBlank(inputCode)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         // 账户长度不小于6位
@@ -106,6 +107,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (count > 0) {
             throw new BusinessException(PARAMS_ERROR, "账户名已存在");
         }
+        // 一个手机号只能绑定一个账户
+        Integer count1 = this.lambdaQuery().eq(User::getPhone, phone).count();
+        if(count1 > 0){
+            throw new BusinessException(PARAMS_ERROR,"该手机已注册，请直接登录!");
+        }
+        // 校验手机验证码
+        String code = redisTemplate.opsForValue().get("sendCode:" + phone).toString();
+        if(StrUtil.isBlank(code)){
+            throw new BusinessException(PARAMS_ERROR,"验证码已过期");
+        }
+        if(!code.equals(inputCode)){
+            throw new BusinessException(PARAMS_ERROR,"验证码错误");
+        }
         // 密码加密
         String newPassword = DigestUtils.md5DigestAsHex((SALT + loginPassword).getBytes());
         // 插入数据
@@ -113,10 +127,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setLoginAccount(loginAccount);
         user.setLoginPassword(newPassword);
         user.setNickname(nickname);
+        user.setPhone(phone);
         boolean saveResult = this.save(user);
         if (!saveResult) {
             throw new BusinessException(ErrorCode.DATABASE_ERROR, "注册失败，未知原因");
         }
+        // 删除 redis 中的验证码信息
+        redisTemplate.delete("sendCode:" + phone);
         return user.getId();
     }
 

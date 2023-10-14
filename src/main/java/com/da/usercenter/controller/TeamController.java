@@ -2,9 +2,8 @@ package com.da.usercenter.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.da.usercenter.common.ResponseResult;
-import com.da.usercenter.model.dto.team.TeamQuery;
+import com.da.usercenter.model.dto.team.*;
 import com.da.usercenter.model.entity.Team;
-import com.da.usercenter.model.request.*;
 import com.da.usercenter.model.vo.TeamUserVO;
 import com.da.usercenter.service.TeamService;
 import org.springframework.web.bind.annotation.*;

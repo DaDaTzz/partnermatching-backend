@@ -1,4 +1,4 @@
-package com.da.usercenter.model.request;
+package com.da.usercenter.model.dto.team;
 
 import lombok.Data;
 
