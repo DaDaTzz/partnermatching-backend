@@ -69,8 +69,8 @@ public class UserController {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        long res = userService.userRegister(userRegisterRequest.getLoginAccount(), userRegisterRequest.getLoginPassword(), userRegisterRequest.getCheckPassword(), userRegisterRequest.getNickname(), userRegisterRequest.getPhone(), userRegisterRequest.getInputCode());
-        return ResponseResult.success(res, "注册成功！");
+        long id = userService.userRegister(userRegisterRequest.getLoginAccount(), userRegisterRequest.getLoginPassword(), userRegisterRequest.getCheckPassword(), userRegisterRequest.getNickname(), userRegisterRequest.getPhone(), userRegisterRequest.getInputCode());
+        return ResponseResult.success(id, "注册成功");
     }
 
     /**

@@ -62,6 +62,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private UserFollowsMapper userFriendMapper;
+    @Resource
+    private UserMapper userMapper;
 
 
     /**
