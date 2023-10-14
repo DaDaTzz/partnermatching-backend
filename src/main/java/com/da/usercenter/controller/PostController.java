@@ -15,15 +15,19 @@ import com.da.usercenter.model.entity.Post;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.vo.PostVO;
 import com.da.usercenter.service.PostService;
+import com.da.usercenter.service.UploadService;
 import com.da.usercenter.service.UserService;
 import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -42,6 +46,9 @@ public class PostController {
     private PostService postService;
 
     @Resource
+    private UploadService uploadService;
+
+    @Resource
     private UserService userService;
 
     private final static Gson GSON = new Gson();
@@ -51,21 +58,24 @@ public class PostController {
     /**
      * 创建
      *
-     * @param postAddRequest
+     * @param
      * @param request
      * @return
      */
     @PostMapping("/add")
-    public ResponseResult<Long> addPost(@RequestBody PostAddRequest postAddRequest, HttpServletRequest request) {
-        if (postAddRequest == null) {
+    public ResponseResult<Long> addPost(@RequestParam("file") MultipartFile[] files, @RequestParam("title") String title,@RequestParam("content") String content, HttpServletRequest request) {
+        if(StringUtils.isAnyBlank(title,content)){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         Post post = new Post();
-        BeanUtils.copyProperties(postAddRequest, post);
-        List<String> tags = postAddRequest.getTags();
-        if (tags != null) {
-            post.setTags(GSON.toJson(tags));
-        }
+        Post p = new Post();
+        p.setContent(content);
+        p.setTitle(title);
+        BeanUtils.copyProperties(p, post);
+//        List<String> tags = postAddRequest.getTags();
+//        if (tags != null) {
+//            post.setTags(GSON.toJson(tags));
+//        }
         postService.validPost(post, true);
         User loginUser = userService.getCurrentUser(request);
         post.setUserId(loginUser.getId());
@@ -74,6 +84,19 @@ public class PostController {
         boolean result = postService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.PARAMS_ERROR);
         long newPostId = post.getId();
+
+        // 存博文图片
+        try {
+            List<String> msgUrlList = uploadService.uploadMsg(files, newPostId);
+            String msgsJson = GSON.toJson(msgUrlList);
+            Post newPort = new Post();
+            newPort.setId(newPostId);
+            newPort.setImg(msgsJson);
+            postService.updateById(newPort);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return ResponseResult.success(newPostId);
     }
 
@@ -160,7 +183,7 @@ public class PostController {
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
         // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(size > 60, ErrorCode.PARAMS_ERROR);
         QueryWrapper<Post> queryWrapper = postService.getQueryWrapper(postQueryRequest);
         queryWrapper.orderByDesc("thumb_num");
         Page<Post> postPage = postService.page(new Page<>(current, size),

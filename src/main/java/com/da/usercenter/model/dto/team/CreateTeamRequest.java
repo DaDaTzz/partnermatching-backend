@@ -18,10 +18,6 @@ public class CreateTeamRequest implements Serializable {
      */
     private String name;
 
-    /**
-     * 队伍头像
-     */
-    private String profilePhoto;
 
     /**
      * 描述

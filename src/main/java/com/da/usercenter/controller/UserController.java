@@ -250,10 +250,6 @@ public class UserController {
      */
     @PostMapping("/sendSms")
     public ResponseResult<Boolean> sendSms(@RequestBody SendCodeRequest sendCodeRequest, HttpServletRequest request) {
-        User currentUser = userService.getCurrentUser(request);
-        if(currentUser == null){
-            throw new BusinessException(ErrorCode.NOT_LOGIN,"未登录");
-        }
         String phone = sendCodeRequest.getPhone();
         if (StringUtils.isBlank(phone)) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "验证码为空");
@@ -344,6 +340,7 @@ public class UserController {
             redisTemplate.delete("sendEmail:" + receiveEmail);
         }
         // 执行 update 操作后，更新 redis 中的用户信息
+        redisTemplate.delete("user:login:" + user.getId());
         User u = userService.getById(id);
         User safeUser = userService.getSafeUser(u);
         redisTemplate.opsForValue().set("user:login:" + id, safeUser,30, TimeUnit.MINUTES);

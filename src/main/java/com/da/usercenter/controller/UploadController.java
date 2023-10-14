@@ -1,119 +1,171 @@
 package com.da.usercenter.controller;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
+import com.da.usercenter.model.entity.Team;
 import com.da.usercenter.model.entity.User;
+import com.da.usercenter.service.PostService;
+import com.da.usercenter.service.TeamService;
+import com.da.usercenter.service.UploadService;
 import com.da.usercenter.service.UserService;
+import com.da.usercenter.utils.GiteeImgBed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+/**
+ * 上传图床
+ */
 @RestController
-@RequestMapping("/upload")
+@RequestMapping("/img")
+@Transactional(rollbackFor = Exception.class)
 //@CrossOrigin(origins = {"http://8.130.133.165"},allowCredentials = "true")
-@CrossOrigin(origins = {"http://127.0.0.1:5173"},allowCredentials = "true")
+@CrossOrigin(origins = {"http://127.0.0.1:5173"}, allowCredentials = "true")
 public class UploadController {
-
-    public static final int AVATAR_MAX_SIZE = 10 * 1024 * 1024;
-
-    private final Logger logger = LoggerFactory.getLogger(UploadController.class);
-
-    public static final List<String> AVATAR_TYPES = new ArrayList<String>();
-
     @Resource
     private UserService userService;
 
-    /** 初始化允许上传的头像的文件类型 */
-    static {
-        AVATAR_TYPES.add("image/jpeg");
-        AVATAR_TYPES.add("image/png");
-        AVATAR_TYPES.add("image/bmp");
-        AVATAR_TYPES.add("image/gif");
-        AVATAR_TYPES.add("text/plain");
-        AVATAR_TYPES.add("application/vnd.ms-excel");
-        AVATAR_TYPES.add("application/msword");
-    }
+    @Resource
+    private TeamService teamService;
+    @Resource
+    private RedisTemplate redisTemplate;
+    @Resource
+    private UploadService uploadService;
 
 
-    @RequestMapping("/uploadFile")
-    public ResponseResult<Boolean> changeAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
-        // 是否登录
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    /**
+     * 上传头像
+     *
+     * @param files
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("/uploadAwatar")
+    public ResponseResult<Boolean> uploadAwatar(@RequestParam("file") MultipartFile[] files, HttpServletRequest request) throws Exception {
         User currentUser = userService.getCurrentUser(request);
-        if(currentUser == null){
+        if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
+        long id = currentUser.getId();
+        List<String> msgUrlList = uploadService.uploadMsg(files, id);
 
-        // 判断上传的文件是否为空
-        if (file.isEmpty()) {
-            throw new BusinessException(ErrorCode.NULL_ERROR);
-        }
-
-        // 判断上传的文件大小是否超出限制值
-        if (file.getSize() > AVATAR_MAX_SIZE) { // getSize()：返回文件的大小，以字节为单位
-            // 是：抛出异常
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"不允许上传超过" + (AVATAR_MAX_SIZE / 1024) + "KB的头像文件");
-        }
-
-        // 判断上传的文件类型是否超出限制
-        String contentType = file.getContentType();
-        logger.info("文件类型contentType：{}", contentType);
-
-        if (!AVATAR_TYPES.contains(contentType)) {
-            // 是：抛出异常
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"不允许上传超过" + ("不支持使用该类型的文件作为头像，允许的文件类型：" + AVATAR_TYPES));
-
-        }
-
-        // 获取当前项目的绝对磁盘路径
-        String parent = "/www/wwwroot/awata";
-        // 保存头像文件的文件夹
-        File dir = new File(parent);
-        if (!dir.exists()) {
-            //若是文件路径不存在，就新建文件路径
-            dir.mkdirs();
-        }
-
-
-        // 保存的头像文件的文件名
-        String suffix = "";
-
-        String originalFilename = file.getOriginalFilename();
-
-        int index = originalFilename.indexOf(".");
-        if (index > 0) {
-            suffix = originalFilename.substring(index);
-        }
-
-        // 拼接文件名
-        String filename = currentUser.getId() + suffix;
-
-        // 创建文件对象，表示保存的头像文件
-        File dest = new File(dir, filename);
-
-        try {
-            file.transferTo(dest);
-        } catch (IllegalStateException e) {
-            // 抛出异常
-            logger.info("文件状态异常，可能文件已被移动或删除");
-        } catch (IOException e) {
-            // 抛出异常
-            logger.info("上传文件时读写错误，请稍后重新尝试");
-        }
-
+        //修改用户头像
         User user = new User();
-        user.setId(currentUser.getId());
-        user.setProfilePhoto(parent + "\\" +  filename);
+        user.setId(id);
+        user.setProfilePhoto(msgUrlList.get(0));
+        // 更新 redis 缓存
         boolean res = userService.updateById(user);
+        redisTemplate.delete("user:login:" + user.getId());
+        User u = userService.getById(id);
+        User safeUser = userService.getSafeUser(u);
+        redisTemplate.opsForValue().set("user:login:" + user.getId(), safeUser);
         return ResponseResult.success(res);
     }
+
+    /**
+     * 上传队伍封面
+     * @param files
+     * @param id
+     * @param request
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("/uploadTeamImg")
+    public ResponseResult<Boolean> uploadTeamImg(@RequestParam("file") MultipartFile[] files,@RequestParam("id") Long id, HttpServletRequest request) throws Exception {
+        User currentUser = userService.getCurrentUser(request);
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
+        if(files.length == 0 || id == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        List<String> msgUrlList = uploadService.uploadMsg(files, id);
+
+        //修改队伍封面
+        Team team = new Team();
+        team.setId(id);
+        team.setProfilePhoto(msgUrlList.get(0));
+        boolean res = teamService.updateById(team);
+        return ResponseResult.success(res);
+    }
+
+
+
+
+    /**
+     * 删除图片
+     *
+     * @param imgPath
+     * @return
+     * @throws Exception
+     */
+    @DeleteMapping("/del")
+    @ResponseBody
+    public ResponseResult<Boolean> delImg(@RequestParam(value = "imgPath") String imgPath) throws Exception {
+        //路径不存在不存在时
+        if (imgPath == null || "".equals(imgPath.trim())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "路径不存在");
+        }
+        String path = imgPath.split("master/")[1];
+        //上传图片不存在时
+        if (path == null || "".equals(path.trim())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "图片不存在");
+        }
+        //设置请求路径
+        String requestUrl = String.format(GiteeImgBed.GET_IMG_URL, GiteeImgBed.OWNER,
+                GiteeImgBed.REPO_NAME, path);
+        logger.info("请求Gitee仓库路径:{}", requestUrl);
+
+        //获取图片所有信息
+        String resultJson = HttpUtil.get(requestUrl);
+
+        JSONObject jsonObject = JSONUtil.parseObj(resultJson);
+        if (jsonObject == null) {
+            logger.error("Gitee服务器未响应,message:{}", jsonObject);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Gitee服务器未响应");
+        }
+        //获取sha,用于删除图片
+        String sha = jsonObject.getStr("sha");
+        //设置删除请求参数
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("access_token", GiteeImgBed.ACCESS_TOKEN);
+        paramMap.put("sha", sha);
+        paramMap.put("message", GiteeImgBed.DEl_MESSAGE);
+        //设置删除路径
+        requestUrl = String.format(GiteeImgBed.DEL_IMG_URL, GiteeImgBed.OWNER,
+                GiteeImgBed.REPO_NAME, path);
+        logger.info("请求Gitee仓库路径:{}", requestUrl);
+        //删除文件请求路径
+        resultJson = HttpRequest.delete(requestUrl).form(paramMap).execute().body();
+        HttpRequest.put(requestUrl).form(paramMap).execute().body();
+        jsonObject = JSONUtil.parseObj(resultJson);
+        //请求之后的操作
+        if (jsonObject.getObj("commit") == null) {
+            logger.error("Gitee服务器未响应,message:{}", jsonObject);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Gitee服务器未响应");
+        }
+        return ResponseResult.success(true);
+    }
+
 }

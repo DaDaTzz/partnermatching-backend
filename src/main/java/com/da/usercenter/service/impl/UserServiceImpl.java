@@ -17,9 +17,7 @@ import com.da.usercenter.model.vo.UserVO;
 import com.da.usercenter.service.UserFollowsService;
 import com.da.usercenter.service.UserService;
 import com.da.usercenter.utils.AlgorithmUtil;
-import com.da.usercenter.utils.SMSUtils;
 import com.da.usercenter.utils.TokenUtils;
-import com.da.usercenter.utils.ValidateCodeUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import javafx.util.Pair;
@@ -75,7 +73,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 创建成功的用户 id
      */
     @Override
-    public Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname,String phone,String inputCode) {
+    public Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname, String phone, String inputCode) {
         // 非空校验
         if (StrUtil.isBlank(loginAccount) || StrUtil.isBlank(loginPassword) || StrUtil.isBlank(checkPassword) || StrUtil.isBlank(nickname) || StrUtil.isBlank(inputCode)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
@@ -99,7 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次密码输入不同");
         }
         // 昵称不为空
-        if(StringUtils.isBlank(nickname)){
+        if (StringUtils.isBlank(nickname)) {
             throw new BusinessException(NULL_ERROR, "昵称能为空");
         }
         // 账户不能重复
@@ -109,16 +107,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 一个手机号只能绑定一个账户
         Integer count1 = this.lambdaQuery().eq(User::getPhone, phone).count();
-        if(count1 > 0){
-            throw new BusinessException(PARAMS_ERROR,"该手机已注册，请直接登录!");
+        if (count1 > 0) {
+            throw new BusinessException(PARAMS_ERROR, "该手机已注册，请直接登录!");
         }
         // 校验手机验证码
         String code = redisTemplate.opsForValue().get("sendCode:" + phone).toString();
-        if(StrUtil.isBlank(code)){
-            throw new BusinessException(PARAMS_ERROR,"验证码已过期");
+        if (StrUtil.isBlank(code)) {
+            throw new BusinessException(PARAMS_ERROR, "验证码已过期");
         }
-        if(!code.equals(inputCode)){
-            throw new BusinessException(PARAMS_ERROR,"验证码错误");
+        if (!code.equals(inputCode)) {
+            throw new BusinessException(PARAMS_ERROR, "验证码错误");
         }
         // 密码加密
         String newPassword = DigestUtils.md5DigestAsHex((SALT + loginPassword).getBytes());
@@ -128,6 +126,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setLoginPassword(newPassword);
         user.setNickname(nickname);
         user.setPhone(phone);
+        user.setProfilePhoto("https://5b0988e595225.cdn.sohucs.com/q_70,c_zoom,w_640/images/20180616/186872ef63844c58876783931c66dddd.gif");
         boolean saveResult = this.save(user);
         if (!saveResult) {
             throw new BusinessException(ErrorCode.DATABASE_ERROR, "注册失败，未知原因");
@@ -136,7 +135,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         redisTemplate.delete("sendCode:" + phone);
         return user.getId();
     }
-
 
 
     /**
@@ -231,7 +229,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         List<User> userList = this.list(queryWrapper);
         return userList.stream().map(this::getSafeUser).collect(Collectors.toList());
     }
-
 
 
     /**
@@ -388,11 +385,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     redisTemplate.opsForValue().set("user:login:" + user.getId(), safeUser, 30, TimeUnit.MINUTES);
                 }
             }
-            // 执行更新操作后更新 redis 中的缓存数据， 保证数据的一致性
-            User newUserInfo = this.getById(user.getId());
-            User safeUser = this.getSafeUser(newUserInfo);
-            redisTemplate.opsForValue().set("user:login:" + user.getId(), safeUser, 30, TimeUnit.MINUTES);
-            // 更新推荐用户列表 防止数据不统一
+            // 执行更新操作后删除 redis 中的缓存数据， 保证数据的一致性
+            redisTemplate.delete("user:login:" + user.getId());
+            long id = loginUser.getId();
+            User u = this.getById(id);
+            User safeUser = this.getSafeUser(u);
+            redisTemplate.opsForValue().set("user:login:" + user.getId(),safeUser);
+            // 删除推荐用户列表缓存 防止数据不统一
             Set<String> keys = redisTemplate.keys("user:recommend:" + "*");
             redisTemplate.delete(keys);
             return res;
@@ -441,7 +440,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public List<User> matchUsers(long num,String nickname, HttpServletRequest request) {
+    public List<User> matchUsers(long num, String nickname, HttpServletRequest request) {
         if (num <= 0 || num > 20) {
             throw new BusinessException(PARAMS_ERROR);
         }
@@ -455,7 +454,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(User::getId, User::getTags);
         queryWrapper.isNotNull(User::getTags);
-        if(StringUtils.isNotBlank(nickname)){
+        if (StringUtils.isNotBlank(nickname)) {
             queryWrapper.like(User::getNickname, nickname);
         }
         List<User> userList = this.list(queryWrapper);
@@ -529,6 +528,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 关注/取关
+     *
      * @param addFriendRequest
      * @param request
      * @return
@@ -536,15 +536,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public Boolean addLove(AddLoveRequest addFriendRequest, HttpServletRequest request) {
         Long id = addFriendRequest.getId();
-        if(id == null || id <= 0){
+        if (id == null || id <= 0) {
             throw new BusinessException(PARAMS_ERROR);
         }
         User currentUser = this.getCurrentUser(request);
-        if(currentUser == null){
+        if (currentUser == null) {
             throw new BusinessException(NOT_LOGIN);
         }
         // 不能关注自己
-        if(id == currentUser.getId()){
+        if (id == currentUser.getId()) {
             throw new BusinessException(PARAMS_ERROR, "不能添加自己为好友！");
         }
         // 取关
@@ -552,7 +552,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<UserFollows> userFriendLambdaQueryWrapper = new LambdaQueryWrapper<>();
         userFriendLambdaQueryWrapper.eq(UserFollows::getUserId, userId).eq(UserFollows::getLoveId, id);
         int count = userFriendService.count(userFriendLambdaQueryWrapper);
-        if(count >= 1){
+        if (count >= 1) {
             return userFriendService.remove(userFriendLambdaQueryWrapper);
         }
         // 插入数据
@@ -565,6 +565,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 更新标签
+     *
      * @param updateTagRequest
      * @param request
      * @return
@@ -572,14 +573,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public Boolean updateTag(UpdateTagRequest updateTagRequest, HttpServletRequest request) {
         User currentUser = this.getCurrentUser(request);
-        if(currentUser == null){
+        if (currentUser == null) {
             throw new BusinessException(NOT_LOGIN, "未登录");
         }
         String[] tags = updateTagRequest.getTags();
-        if(tags == null || tags.length == 0){
+        if (tags == null || tags.length == 0) {
             throw new BusinessException(NULL_ERROR, "标签不能为空");
         }
-        if(tags.length > 10){
+        if (tags.length > 10) {
             throw new BusinessException(PARAMS_ERROR, "最多设置十个标签");
         }
         User user = new User();
@@ -589,7 +590,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String tagJsonStr = gson.toJson(tags);
         user.setTags(tagJsonStr);
         boolean res = updateById(user);
-        if(res){
+        if (res) {
             // 执行更新操作后更新 redis 中的缓存数据， 保证数据的一致性
             User newUserInfo = this.getById(user.getId());
             User safeUser = this.getSafeUser(newUserInfo);

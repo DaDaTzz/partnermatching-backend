@@ -132,6 +132,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         createTeamRequest.setUserId(userId);
         Team team = new Team();
         BeanUtils.copyProperties(createTeamRequest, team);
+        team.setProfilePhoto("https://img.soogif.com/h3n2fCAZw01eNCLY8vmuIclJNl2iovDB.gif"); // 默认头像
         System.out.println(team);
         boolean res = this.save(team);
         if (!res) {
