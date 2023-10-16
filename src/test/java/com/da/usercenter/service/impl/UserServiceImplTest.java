@@ -1,9 +1,6 @@
 package com.da.usercenter.service.impl;
 
-import com.da.usercenter.model.entity.User;
 import com.da.usercenter.service.UserService;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;

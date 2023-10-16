@@ -11,8 +11,8 @@
     <groupId>com.da</groupId>
     <artifactId>partnermatching-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>user-center</name>
-    <description>user-center</description>
+    <name>partnermatching</name>
+    <description>partnermatching</description>
     <properties>
         <java.version>1.8</java.version>
     </properties>

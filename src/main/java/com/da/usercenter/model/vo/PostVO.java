@@ -2,7 +2,6 @@ package com.da.usercenter.model.vo;
 
 import com.da.usercenter.model.entity.Post;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 

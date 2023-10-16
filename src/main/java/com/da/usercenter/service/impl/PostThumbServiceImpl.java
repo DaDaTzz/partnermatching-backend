@@ -12,7 +12,6 @@ import com.da.usercenter.model.entity.User;
 import com.da.usercenter.service.PostService;
 import com.da.usercenter.service.PostThumbService;
 import org.springframework.aop.framework.AopContext;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

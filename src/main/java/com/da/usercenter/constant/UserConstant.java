@@ -1,7 +1,5 @@
 package com.da.usercenter.constant;
 
-import lombok.Data;
-
 /**
  * @author Da
  * &#064;date  2023/6/10 20:39

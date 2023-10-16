@@ -1,6 +1,5 @@
 package com.da.usercenter.common;
 
-import lombok.Data;
 import lombok.Getter;
 
 /**

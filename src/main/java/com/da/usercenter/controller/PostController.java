@@ -7,7 +7,6 @@ import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.exception.ThrowUtils;
-import com.da.usercenter.model.dto.post.PostAddRequest;
 import com.da.usercenter.model.dto.post.PostEditRequest;
 import com.da.usercenter.model.dto.post.PostQueryRequest;
 import com.da.usercenter.model.dto.post.PostUpdateRequest;

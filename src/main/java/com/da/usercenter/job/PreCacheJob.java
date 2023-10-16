@@ -2,10 +2,8 @@ package com.da.usercenter.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.da.usercenter.mapper.UserMapper;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.service.UserService;
-import jdk.nashorn.internal.objects.annotations.ScriptClass;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;

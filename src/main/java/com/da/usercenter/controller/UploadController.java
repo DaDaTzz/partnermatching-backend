@@ -1,6 +1,5 @@
 package com.da.usercenter.controller;
 
-import cn.hutool.core.codec.Base64;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
@@ -10,7 +9,6 @@ import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.model.entity.Team;
 import com.da.usercenter.model.entity.User;
-import com.da.usercenter.service.PostService;
 import com.da.usercenter.service.TeamService;
 import com.da.usercenter.service.UploadService;
 import com.da.usercenter.service.UserService;
@@ -27,8 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 上传图床
