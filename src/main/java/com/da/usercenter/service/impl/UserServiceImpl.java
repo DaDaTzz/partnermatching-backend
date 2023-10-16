@@ -472,6 +472,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             queryWrapper.like(User::getNickname, nickname);
         }
         List<User> userList = this.list(queryWrapper);
+        if(userList.size() == 0){
+            return new ArrayList<>();
+        }
         String tags = loginUser.getTags();
         Gson gson = new Gson();
         List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
