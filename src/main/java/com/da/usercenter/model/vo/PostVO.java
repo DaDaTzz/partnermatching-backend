@@ -50,6 +50,8 @@ public class PostVO implements Serializable {
      */
     private Integer favourNum;
 
+
+
     /**
      * 创建用户 id
      */
@@ -69,6 +71,16 @@ public class PostVO implements Serializable {
      * 标签列表
      */
     private List<String> tagList;
+
+    /**
+     * 评论以及评论的用户信息
+     */
+    private List<PostCommentUserVO> postCommentUserVOs;
+
+    /**
+     * 评论数量
+     */
+    private Long commentNum;
 
     /**
      * 创建人信息

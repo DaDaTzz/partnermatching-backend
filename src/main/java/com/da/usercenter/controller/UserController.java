@@ -190,8 +190,8 @@ public class UserController {
      * @return
      */
     @GetMapping("/match")
-    public ResponseResult<List<User>> matchUsers(long num, String nickname, HttpServletRequest request) {
-        List<User> userList = userService.matchUsers(num, nickname, request);
+    public ResponseResult<List<UserVO>> matchUsers(long num, String nickname, HttpServletRequest request) {
+        List<UserVO> userList = userService.matchUsers(num, nickname, request);
         return ResponseResult.success(userList);
     }
 
@@ -207,6 +207,11 @@ public class UserController {
         return ResponseResult.success(lovesList);
     }
 
+    /**
+     * 获取粉丝列表
+     * @param request
+     * @return
+     */
     @GetMapping("/get/fans")
     public ResponseResult<List<UserVO>> getFans(HttpServletRequest request) {
         List<UserVO> fansList = userService.getFans(request);
@@ -221,9 +226,9 @@ public class UserController {
      * @param request
      * @return
      */
-    @PostMapping("/addLove")
-    public ResponseResult<Boolean> addLove(@RequestBody AddLoveRequest addFansRequest, HttpServletRequest request) {
-        Boolean res = userService.addLove(addFansRequest, request);
+    @PostMapping("/follow")
+    public ResponseResult<Boolean> addFollow(@RequestBody AddFollowRequest addFansRequest, HttpServletRequest request) {
+        Boolean res = userService.addFollow(addFansRequest, request);
         return ResponseResult.success(res);
     }
 
@@ -345,6 +350,26 @@ public class UserController {
         User safeUser = userService.getSafeUser(u);
         redisTemplate.opsForValue().set("user:login:" + id, safeUser,30, TimeUnit.MINUTES);
         return ResponseResult.success(res);
+    }
+
+    /**
+     * 修改密码
+     * @param updatePasswordRequest
+     * @return
+     */
+    @PostMapping("/updatePassword")
+    public ResponseResult<Boolean> updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest){
+        String newPassword = updatePasswordRequest.getNewPassword();
+        String phone = updatePasswordRequest.getPhone();
+        String inputCode = updatePasswordRequest.getInputCode();
+        String loginAccount = updatePasswordRequest.getLoginAccount();
+        String checkPassword = updatePasswordRequest.getCheckPassword();
+        if(StringUtils.isAnyBlank(newPassword, phone, inputCode,loginAccount,checkPassword)){
+            throw new BusinessException(ErrorCode.NULL_ERROR,"请求参数为空");
+        }
+        Boolean res = userService.updatePassword(newPassword, phone,inputCode,loginAccount,checkPassword);
+        return ResponseResult.success(res);
+
     }
 
 

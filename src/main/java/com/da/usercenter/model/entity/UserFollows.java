@@ -10,7 +10,7 @@ import lombok.Data;
  * 好友关系
  * @TableName user_friend
  */
-@TableName(value ="user_friend")
+@TableName(value ="user_follows")
 @Data
 public class UserFollows implements Serializable {
     /**
@@ -28,6 +28,11 @@ public class UserFollows implements Serializable {
      * 用户 id
      */
     private Long loveId;
+
+    /**
+     * 是否关注 0-未关注 1-已关注
+     */
+    private Integer isFollow;
 
     /**
      * 创建时间

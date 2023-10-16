@@ -1,12 +1,19 @@
 package com.da.usercenter;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.StopWatch;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.BeanUtils;
 import com.da.usercenter.common.PageRequest;
 import com.da.usercenter.manager.RedisLimiterManager;
 import com.da.usercenter.mapper.UserFollowsMapper;
 import com.da.usercenter.mapper.UserMapper;
+import com.da.usercenter.model.entity.PostComment;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.entity.UserTeam;
+import com.da.usercenter.model.vo.PostCommentUserVO;
+import com.da.usercenter.model.vo.UserVO;
+import com.da.usercenter.service.PostCommentService;
 import com.da.usercenter.service.UserService;
 import com.da.usercenter.service.UserTeamService;
 import com.da.usercenter.utils.IpUtils;
@@ -37,6 +44,8 @@ class UserCenterApplicationTests {
 
     @Resource
     private JavaMailSender javaMailSender;
+    @Resource
+    private PostCommentService postCommentService;
 
     @Test
     public void testInsertUser(){
@@ -162,6 +171,26 @@ class UserCenterApplicationTests {
         // 调用阿里云api发送短信验证码
         System.out.println("生成的验证码为：" + code);
         SMSUtils.sendMessage("瑞吉外卖", "SMS_460765534", "18370952133", "6666");
+    }
+
+    @Test
+    void testGetPostComments(){
+        LambdaQueryWrapper<PostComment> postCommentLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        postCommentLambdaQueryWrapper.eq(PostComment::getPostId, 1);
+        List<PostComment> postCommentList = postCommentService.list(postCommentLambdaQueryWrapper);
+        ArrayList<PostCommentUserVO> postCommentUserVOS = new ArrayList<>();
+        for (PostComment postComment : postCommentList) {
+            PostCommentUserVO postCommentUserVO = new PostCommentUserVO();
+            BeanUtil.copyProperties(postComment,postCommentUserVO);
+            Long userId = postComment.getUserId();
+            User user = userService.getById(userId);
+            UserVO userVO = new UserVO();
+            BeanUtil.copyProperties(user,userVO);
+            postCommentUserVO.setCommentUser(userVO);
+            postCommentUserVOS.add(postCommentUserVO);
+        }
+        postCommentUserVOS.forEach(postCommentUserVO -> System.out.println(postCommentUserVO));
+
     }
 
 

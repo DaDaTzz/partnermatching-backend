@@ -11,7 +11,7 @@ import com.da.usercenter.mapper.UserFollowsMapper;
 import com.da.usercenter.mapper.UserMapper;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.entity.UserFollows;
-import com.da.usercenter.model.dto.user.AddLoveRequest;
+import com.da.usercenter.model.dto.user.AddFollowRequest;
 import com.da.usercenter.model.dto.user.UpdateTagRequest;
 import com.da.usercenter.model.vo.UserVO;
 import com.da.usercenter.service.UserFollowsService;
@@ -53,7 +53,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private RedisTemplate redisTemplate;
 
     @Resource
-    private UserFollowsService userFriendService;
+    private UserFollowsService userFollowsService;
 
     /**
      * 盐值，混淆密码
@@ -200,15 +200,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public User getLoginUserPermitNull(HttpServletRequest request) {
-        // 先判断是否已登录
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User currentUser = (User) userObj;
-        if (currentUser == null || currentUser.getId() == 0) {
+        String token = request.getHeader("Authorization");
+        if (StringUtils.isBlank(token)) {
             return null;
         }
-        // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        return this.getById(userId);
+        String userId = TokenUtils.getAccount(token);
+        // 从缓存中获取用户信息
+        User user = (User) redisTemplate.opsForValue().get("user:login:" + userId);
+        if (user == null) {
+            return null;
+        }
+        if (user != null && USER_DISABLE.equals(user.getStates())) {
+            return null;
+        }
+        return this.getSafeUser(user);
     }
 
     /**
@@ -392,7 +397,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             long id = loginUser.getId();
             User u = this.getById(id);
             User safeUser = this.getSafeUser(u);
-            redisTemplate.opsForValue().set("user:login:" + user.getId(),safeUser);
+            redisTemplate.opsForValue().set("user:login:" + user.getId(), safeUser);
             // 删除推荐用户列表缓存 防止数据不统一
             Set<String> keys = redisTemplate.keys("user:recommend:" + "*");
             redisTemplate.delete(keys);
@@ -441,8 +446,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userPage;
     }
 
+    /**
+     * 匹配相似用户
+     * @param num 推荐数量
+     * @param nickname
+     * @param request 客户端请求对象
+     * @return
+     */
     @Override
-    public List<User> matchUsers(long num, String nickname, HttpServletRequest request) {
+    public List<UserVO> matchUsers(long num, String nickname, HttpServletRequest request) {
         if (num <= 0 || num > 20) {
             throw new BusinessException(PARAMS_ERROR);
         }
@@ -500,7 +512,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         for (Long userId : userIdList) {
             finalUserList.add(userIdUserListMap.get(userId).get(0));
         }
-        return finalUserList;
+        // 是否关注
+        List<UserVO> loves = this.getLoves(request);
+        ArrayList<Long> loveIdList = new ArrayList<>();
+        for (int i = 0; i < loves.size(); i++) {
+            loveIdList.add(loves.get(i).getId());
+        }
+        ArrayList<UserVO> userVOS = new ArrayList<>();
+        for (int i = 0; i < finalUserList.size(); i++) {
+            User user = finalUserList.get(i);
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(user, userVO);
+            if (loveIdList.contains(user.getId())) {
+                userVO.setIsFollow(true);
+            }else{
+                userVO.setIsFollow(false);
+            }
+            userVOS.add(userVO);
+        }
+        return userVOS;
     }
 
     @Override
@@ -536,32 +566,39 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return
      */
     @Override
-    public Boolean addLove(AddLoveRequest addFriendRequest, HttpServletRequest request) {
-        Long id = addFriendRequest.getId();
-        if (id == null || id <= 0) {
+    public Boolean addFollow(AddFollowRequest addFriendRequest, HttpServletRequest request) {
+        if (addFriendRequest == null) {
             throw new BusinessException(PARAMS_ERROR);
         }
         User currentUser = this.getCurrentUser(request);
         if (currentUser == null) {
             throw new BusinessException(NOT_LOGIN);
         }
+        Long id = addFriendRequest.getId();
         // 不能关注自己
         if (id == currentUser.getId()) {
-            throw new BusinessException(PARAMS_ERROR, "不能添加自己为好友！");
+            throw new BusinessException(PARAMS_ERROR, "不能关注自己！");
         }
-        // 取关
         long userId = currentUser.getId();
         LambdaQueryWrapper<UserFollows> userFriendLambdaQueryWrapper = new LambdaQueryWrapper<>();
         userFriendLambdaQueryWrapper.eq(UserFollows::getUserId, userId).eq(UserFollows::getLoveId, id);
-        int count = userFriendService.count(userFriendLambdaQueryWrapper);
-        if (count >= 1) {
-            return userFriendService.remove(userFriendLambdaQueryWrapper);
+        UserFollows one = userFollowsService.getOne(userFriendLambdaQueryWrapper);
+        if (one != null) {
+            Integer isFollow = one.getIsFollow();
+            if (isFollow == 1) {
+                one.setIsFollow(0);
+                return userFollowsService.updateById(one);
+            } else if (isFollow == 0) {
+                one.setIsFollow(1);
+                return userFollowsService.updateById(one);
+            }
         }
         // 插入数据
         UserFollows userFollows = new UserFollows();
         userFollows.setUserId(userId);
         userFollows.setLoveId(id);
-        return userFriendService.save(userFollows);
+        userFollows.setIsFollow(1);
+        return userFollowsService.save(userFollows);
     }
 
 
@@ -626,6 +663,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             loveList.add(userVO);
         }
         return loveList;
+    }
+
+    @Override
+    public Boolean updatePassword(String newPassword, String phone, String inputCode, String loginAccount, String checkPassword) {
+        if (org.apache.commons.lang3.StringUtils.isAnyBlank(newPassword, phone, inputCode, loginAccount, checkPassword)) {
+            throw new BusinessException(NULL_ERROR, "请求参数为空");
+        }
+        String code = redisTemplate.opsForValue().get("sendCode:" + phone).toString();
+        if (org.apache.commons.lang3.StringUtils.isBlank(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码已过期");
+        }
+        if (!inputCode.equals(code)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误");
+        }
+        if (!newPassword.equals(checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+        }
+        // 密码加密
+        String password = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
+        // 更新
+        LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(User::getLoginAccount, loginAccount);
+        User user = new User();
+        user.setLoginPassword(password);
+        return this.update(user, lambdaQueryWrapper);
     }
 
 

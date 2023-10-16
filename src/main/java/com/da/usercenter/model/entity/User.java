@@ -92,6 +92,8 @@ public class User implements Serializable {
      */
     private Integer type;
 
+
+
     /**
      * 逻辑删除
      * 0-未删除

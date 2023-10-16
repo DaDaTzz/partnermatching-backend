@@ -1,5 +1,7 @@
 package com.da.usercenter.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -7,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.da.usercenter.common.ErrorCode;
+import com.da.usercenter.common.PageRequest;
 import com.da.usercenter.constant.CommonConstant;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.exception.ThrowUtils;
@@ -14,20 +17,17 @@ import com.da.usercenter.mapper.PostFavourMapper;
 import com.da.usercenter.mapper.PostMapper;
 import com.da.usercenter.mapper.PostThumbMapper;
 import com.da.usercenter.model.dto.post.PostQueryRequest;
-import com.da.usercenter.model.entity.Post;
-import com.da.usercenter.model.entity.PostFavour;
-import com.da.usercenter.model.entity.PostThumb;
-import com.da.usercenter.model.entity.User;
+import com.da.usercenter.model.entity.*;
+import com.da.usercenter.model.vo.PostCommentUserVO;
 import com.da.usercenter.model.vo.PostVO;
 import com.da.usercenter.model.vo.UserVO;
+import com.da.usercenter.service.PostCommentService;
 import com.da.usercenter.service.PostService;
 import com.da.usercenter.service.UserService;
 import com.da.usercenter.utils.SqlUtils;
 import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.data.domain.PageRequest;
 
 import org.springframework.stereotype.Service;
 
@@ -55,6 +55,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Resource
     private PostFavourMapper postFavourMapper;
+    @Resource
+    private PostCommentService postCommentService;
 
 
     @Override
@@ -137,14 +139,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (loginUser != null) {
             // 获取点赞
             QueryWrapper<PostThumb> postThumbQueryWrapper = new QueryWrapper<>();
-            postThumbQueryWrapper.in("postId", postId);
-            postThumbQueryWrapper.eq("userId", loginUser.getId());
+            postThumbQueryWrapper.in("post_id", postId);
+            postThumbQueryWrapper.eq("user_id", loginUser.getId());
             PostThumb postThumb = postThumbMapper.selectOne(postThumbQueryWrapper);
             postVO.setHasThumb(postThumb != null);
             // 获取收藏
             QueryWrapper<PostFavour> postFavourQueryWrapper = new QueryWrapper<>();
-            postFavourQueryWrapper.in("postId", postId);
-            postFavourQueryWrapper.eq("userId", loginUser.getId());
+            postFavourQueryWrapper.in("post_id", postId);
+            postFavourQueryWrapper.eq("user_id", loginUser.getId());
             PostFavour postFavour = postFavourMapper.selectOne(postFavourQueryWrapper);
             postVO.setHasFavour(postFavour != null);
         }
@@ -171,14 +173,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             loginUser = userService.getCurrentUser(request);
             // 获取点赞
             QueryWrapper<PostThumb> postThumbQueryWrapper = new QueryWrapper<>();
-            postThumbQueryWrapper.in("postId", postIdSet);
-            postThumbQueryWrapper.eq("userId", loginUser.getId());
+            postThumbQueryWrapper.in("post_id", postIdSet);
+            postThumbQueryWrapper.eq("user_id", loginUser.getId());
             List<PostThumb> postPostThumbList = postThumbMapper.selectList(postThumbQueryWrapper);
             postPostThumbList.forEach(postPostThumb -> postIdHasThumbMap.put(postPostThumb.getPostId(), true));
             // 获取收藏
             QueryWrapper<PostFavour> postFavourQueryWrapper = new QueryWrapper<>();
-            postFavourQueryWrapper.in("postId", postIdSet);
-            postFavourQueryWrapper.eq("userId", loginUser.getId());
+            postFavourQueryWrapper.in("post_id", postIdSet);
+            postFavourQueryWrapper.eq("user_id", loginUser.getId());
             List<PostFavour> postFavourList = postFavourMapper.selectList(postFavourQueryWrapper);
             postFavourList.forEach(postFavour -> postIdHasFavourMap.put(postFavour.getPostId(), true));
         }
@@ -195,6 +197,25 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             postVO.setHasFavour(postIdHasFavourMap.getOrDefault(post.getId(), false));
             return postVO;
         }).collect(Collectors.toList());
+        // 评论以及评论用户信息
+        for (PostVO postVO : postVOList) {
+            ArrayList<PostCommentUserVO> postCommentUserVOS = new ArrayList<PostCommentUserVO>();
+            LambdaQueryWrapper<PostComment> postCommentLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            postCommentLambdaQueryWrapper.eq(PostComment::getPostId, postVO.getId());
+            List<PostComment> postCommentList = postCommentService.list(postCommentLambdaQueryWrapper);
+            for (PostComment postComment : postCommentList) {
+                PostCommentUserVO postCommentUserVO = new PostCommentUserVO();
+                BeanUtil.copyProperties(postComment,postCommentUserVO);
+                Long userId = postComment.getUserId();
+                User user = userService.getById(userId);
+                UserVO userVO = new UserVO();
+                BeanUtil.copyProperties(user,userVO);
+                postCommentUserVO.setCommentUser(userVO);
+                postCommentUserVOS.add(postCommentUserVO);
+            }
+            postVO.setCommentNum((long) postCommentList.size());
+            postVO.setPostCommentUserVOs(postCommentUserVOS);
+        }
         postVOPage.setRecords(postVOList);
         return postVOPage;
     }

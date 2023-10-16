@@ -27,6 +27,11 @@ public class UserVO {
     private Integer sex;
 
     /**
+     * 是否关注
+     */
+    private Boolean isFollow;
+
+    /**
      * 登录账号
      */
     private String loginAccount;

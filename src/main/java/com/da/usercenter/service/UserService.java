@@ -3,7 +3,7 @@ package com.da.usercenter.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.da.usercenter.model.entity.User;
-import com.da.usercenter.model.dto.user.AddLoveRequest;
+import com.da.usercenter.model.dto.user.AddFollowRequest;
 import com.da.usercenter.model.dto.user.UpdateTagRequest;
 import com.da.usercenter.model.vo.UserVO;
 
@@ -129,7 +129,7 @@ public interface UserService extends IService<User> {
      * @param request 客户端请求对象
      * @return 用户信息
      */
-    List<User> matchUsers(long num,String nickname, HttpServletRequest request);
+    List<UserVO> matchUsers(long num,String nickname, HttpServletRequest request);
 
     /**
      * 获取好友列表
@@ -144,7 +144,7 @@ public interface UserService extends IService<User> {
      * @param request
      * @return
      */
-    Boolean addLove(AddLoveRequest addFriendRequest, HttpServletRequest request);
+    Boolean addFollow(AddFollowRequest addFriendRequest, HttpServletRequest request);
 
     /**
      * 更新标签
@@ -155,5 +155,7 @@ public interface UserService extends IService<User> {
     Boolean updateTag(UpdateTagRequest updateTagRequest, HttpServletRequest request);
 
     List<UserVO> getFans(HttpServletRequest request);
+
+    Boolean updatePassword(String newPassword, String phone, String inputCode,String loginAccount,String checkPassword);
 }
 
