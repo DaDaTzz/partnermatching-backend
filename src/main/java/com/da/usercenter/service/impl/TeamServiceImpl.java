@@ -717,10 +717,21 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                     Long teamId = team.getId();
                     List<User> joinUsers = userMapper.getUserListByTeamId(teamId);
                     ArrayList<UserVO> userVOS = new ArrayList<>();
+                    List<UserVO> loves = userService.getLoves(request);
+                    ArrayList<Long> loveIdList = new ArrayList<>();
+                    for (int i = 0; i < loves.size(); i++) {
+                        loveIdList.add(loves.get(i).getId());
+                    }
                     if (!joinUsers.isEmpty()) {
                         for (User joinUser : joinUsers) {
                             UserVO u = new UserVO();
                             BeanUtils.copyProperties(joinUser, u);
+                            // 是否关注
+                            if(loveIdList.contains(u.getId())){
+                                u.setIsFollow(true);
+                            }else{
+                                u.setIsFollow(false);
+                            }
                             userVOS.add(u);
                         }
                     }
@@ -754,10 +765,21 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             Long teamId = team.getId();
             List<User> joinUsers = userMapper.getUserListByTeamId(teamId);
             ArrayList<UserVO> userVOS = new ArrayList<>();
+            List<UserVO> loves = userService.getLoves(request);
+            ArrayList<Long> loveIdList = new ArrayList<>();
+            for (int i = 0; i < loves.size(); i++) {
+                loveIdList.add(loves.get(i).getId());
+            }
             if (!joinUsers.isEmpty()) {
                 for (User joinUser : joinUsers) {
                     UserVO u = new UserVO();
                     BeanUtils.copyProperties(joinUser, u);
+                    // 是否关注
+                    if(loveIdList.contains(u.getId())){
+                        u.setIsFollow(true);
+                    }else{
+                        u.setIsFollow(false);
+                    }
                     userVOS.add(u);
                 }
             }
