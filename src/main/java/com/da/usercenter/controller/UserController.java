@@ -65,12 +65,18 @@ public class UserController {
      * @return
      */
     @PostMapping("/register")
-    public ResponseResult<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
+    public ResponseResult<Boolean> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        long id = userService.userRegister(userRegisterRequest.getLoginAccount(), userRegisterRequest.getLoginPassword(), userRegisterRequest.getCheckPassword(), userRegisterRequest.getNickname(), userRegisterRequest.getPhone(), userRegisterRequest.getInputCode());
-        return ResponseResult.success(id, "注册成功");
+        long userId = userService.userRegister(userRegisterRequest.getLoginAccount(), userRegisterRequest.getLoginPassword(), userRegisterRequest.getCheckPassword(), userRegisterRequest.getNickname(), userRegisterRequest.getPhone(), userRegisterRequest.getInputCode());
+        if(userId > 0){
+            // 返回token
+            String token = TokenUtils.getToken(String.valueOf(userId));
+            return ResponseResult.success(true, token);
+        }
+        return ResponseResult.success(false);
+
     }
 
     /**

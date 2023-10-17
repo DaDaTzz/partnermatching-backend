@@ -138,7 +138,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 删除 redis 中的验证码信息
         redisTemplate.delete("sendCode:" + phone);
-        return user.getId();
+        User newUser = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).one();
+        User safeUser = this.getSafeUser(newUser);
+        // 将用户信息存入redis
+        ValueOperations valueOperations = redisTemplate.opsForValue();
+        valueOperations.set("user:login:" + newUser.getId(), safeUser, 30, TimeUnit.MINUTES);
+        return newUser.getId();
     }
 
 
