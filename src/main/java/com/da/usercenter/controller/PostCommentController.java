@@ -5,6 +5,7 @@ import com.da.usercenter.common.DeleteRequest;
 import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
+import com.da.usercenter.model.dto.post.DelCommentRequest;
 import com.da.usercenter.model.dto.postcomment.AddCommentRequest;
 import com.da.usercenter.model.entity.PostComment;
 import com.da.usercenter.model.entity.User;
@@ -52,22 +53,23 @@ public class PostCommentController {
     }
 
     @PostMapping("/del")
-    public ResponseResult<Boolean> delComment(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request){
+    public ResponseResult<Boolean> delComment(@RequestBody DelCommentRequest delCommentRequest, HttpServletRequest request){
         User currentUser = userService.getCurrentUser(request);
         if(currentUser == null){
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
-        if(deleteRequest == null){
+        if(delCommentRequest == null){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        PostComment postComment = postCommentService.getById(deleteRequest.getId());
+        PostComment postComment = postCommentService.getById(delCommentRequest.getId());
+        // 帖子的创建人、自己写的评论、管理员 才有权限删除
         if(postComment.getUserId() != currentUser.getId()){
-            if(ADMIN_USER.equals(currentUser.getType())){
-                return ResponseResult.success(postCommentService.removeById(deleteRequest.getId()));
+            if(ADMIN_USER.equals(currentUser.getType()) || delCommentRequest.getCreateUserId() == currentUser.getId()){
+                return ResponseResult.success(postCommentService.removeById(delCommentRequest.getId()));
             }
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
-        return ResponseResult.success(postCommentService.removeById(deleteRequest.getId()));
+        return ResponseResult.success(postCommentService.removeById(delCommentRequest.getId()));
 
     }
 
