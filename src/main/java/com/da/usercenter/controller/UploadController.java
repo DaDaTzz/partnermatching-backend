@@ -33,7 +33,7 @@ import java.util.Map;
 @RequestMapping("/img")
 @Transactional(rollbackFor = Exception.class)
 //@CrossOrigin(origins = {"http://8.130.133.165"},allowCredentials = "true")
-@CrossOrigin(origins = {"http://127.0.0.1:5173"}, allowCredentials = "true")
+//@CrossOrigin(origins = {"http://127.0.0.1:5173"}, allowCredentials = "true")
 public class UploadController {
     @Resource
     private UserService userService;

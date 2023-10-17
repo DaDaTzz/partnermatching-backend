@@ -128,7 +128,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setLoginPassword(newPassword);
         user.setNickname(nickname);
         user.setPhone(phone);
+        // 默认头像
         user.setProfilePhoto("https://5b0988e595225.cdn.sohucs.com/q_70,c_zoom,w_640/images/20180616/186872ef63844c58876783931c66dddd.gif");
+        // 默认简介
+        user.setProfile("这个人很懒，什么都没留下！");
         boolean saveResult = this.save(user);
         if (!saveResult) {
             throw new BusinessException(ErrorCode.DATABASE_ERROR, "注册失败，未知原因");
@@ -547,13 +550,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (currentUser == null) {
             throw new BusinessException(NOT_LOGIN);
         }
-        List<User> friends = userFriendMapper.getLovesByUserId(currentUser.getId());
+        List<User> loves = userFriendMapper.getLovesByUserId(currentUser.getId());
         ArrayList<UserVO> loveList = new ArrayList<>();
+
         // 用户信息脱敏
-        for (User love : friends) {
+        for (User love : loves) {
             UserVO userVO = new UserVO();
             User safeUser = this.getSafeUser(love);
             BeanUtils.copyProperties(safeUser, userVO);
+            userVO.setIsFollow(true);
             loveList.add(userVO);
         }
         return loveList;
@@ -656,13 +661,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(NOT_LOGIN);
         }
         long id = currentUser.getId();
-        List<User> friends = userFriendMapper.getFansByUserId(id);
+        List<User> loves = userFriendMapper.getFansByUserId(id);
         ArrayList<UserVO> loveList = new ArrayList<>();
+        ArrayList<Long> loveIdList = new ArrayList<>();
+        for (int i = 0; i < loves.size(); i++) {
+            loveIdList.add(loves.get(i).getId());
+        }
         // 用户信息脱敏
-        for (User love : friends) {
+        for (User love : loves) {
             UserVO userVO = new UserVO();
             User safeUser = this.getSafeUser(love);
             BeanUtils.copyProperties(safeUser, userVO);
+            // 是否关注
+            if(loveIdList.contains(userVO.getId())){
+                userVO.setIsFollow(true);
+            }else{
+                userVO.setIsFollow(false);
+            }
             loveList.add(userVO);
         }
         return loveList;

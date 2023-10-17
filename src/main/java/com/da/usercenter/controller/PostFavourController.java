@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/post_favour")
 @Slf4j
 //@CrossOrigin(origins = {"http://8.130.133.165"},allowCredentials = "true")
-@CrossOrigin(origins = {"http://127.0.0.1:5173"},allowCredentials = "true")
+//@CrossOrigin(origins = {"http://127.0.0.1:5173"},allowCredentials = "true")
 public class PostFavourController {
 
     @Resource

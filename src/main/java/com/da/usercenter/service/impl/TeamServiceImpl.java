@@ -808,6 +808,53 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         return teamUserVOList;
     }
 
+    @Override
+    public TeamUserVO getTeamUserVO(Team team, HttpServletRequest request) {
+        User currentUser = userService.getCurrentUser(request);
+        long userId = currentUser.getId();
+        LambdaQueryWrapper<User> userQueryWrapper = new LambdaQueryWrapper<>();
+        Long uId = team.getUserId();
+        if (uId == null) {
+            return null;
+        }
+        userQueryWrapper.eq(User::getId, userId);
+        User user = userService.getById(userId);
+        UserVO userVO = new UserVO();
+        // 脱敏用户信息
+        if (user != null) {
+            BeanUtils.copyProperties(user, userVO);
+        }
+        // 脱敏队伍信息
+        TeamUserVO teamUserVO = new TeamUserVO();
+        BeanUtils.copyProperties(team, teamUserVO);
+        teamUserVO.setCreateUser(userVO);
+        // 获取已加入队伍的用户信息
+        Long teamId = team.getId();
+        List<User> joinUsers = userMapper.getUserListByTeamId(teamId);
+        ArrayList<UserVO> userVOS = new ArrayList<>();
+        List<UserVO> loves = userService.getLoves(request);
+        ArrayList<Long> loveIdList = new ArrayList<>();
+        for (int i = 0; i < loves.size(); i++) {
+            loveIdList.add(loves.get(i).getId());
+        }
+        if (!joinUsers.isEmpty()) {
+            for (User joinUser : joinUsers) {
+                UserVO u = new UserVO();
+                BeanUtils.copyProperties(joinUser, u);
+                // 是否关注
+                if(loveIdList.contains(u.getId())){
+                    u.setIsFollow(true);
+                }else{
+                    u.setIsFollow(false);
+                }
+                userVOS.add(u);
+            }
+        }
+        teamUserVO.setJoinUsers(userVOS);
+        teamUserVO.setHasJoinNum(joinUsers.size());
+        return teamUserVO;
+    }
+
 
 }
 

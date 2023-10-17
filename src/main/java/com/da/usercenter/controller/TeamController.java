@@ -1,9 +1,13 @@
 package com.da.usercenter.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
+import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.model.dto.team.*;
+import com.da.usercenter.model.entity.Post;
 import com.da.usercenter.model.entity.Team;
+import com.da.usercenter.model.vo.PostVO;
 import com.da.usercenter.model.vo.TeamUserVO;
 import com.da.usercenter.service.TeamService;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/team")
 //@CrossOrigin(origins = {"http://8.130.133.165"},allowCredentials = "true")
-@CrossOrigin(origins = {"http://127.0.0.1:5173"},allowCredentials = "true")
+//@CrossOrigin(origins = {"http://127.0.0.1:5173"},allowCredentials = "true")
 public class TeamController {
 
     @Resource
@@ -88,6 +92,21 @@ public class TeamController {
     public ResponseResult<List<TeamUserVO>> listMyJoinTeams(TeamQuery teamQuery, HttpServletRequest request){
         List<TeamUserVO> teamUserVOList = teamService.listMyJoinTeams(teamQuery, request);
         return ResponseResult.success(teamUserVOList);
+    }
+
+    /**
+     * 根据 id 获取队伍信息
+     */
+    @GetMapping("/get/vo")
+    public ResponseResult<TeamUserVO> getTeamUserVOById(long id, HttpServletRequest request) {
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Team team = teamService.getById(id);
+        if (team == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        return ResponseResult.success(teamService.getTeamUserVO(team, request));
     }
 
 

@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/user")
 //@CrossOrigin(origins = {"http://8.130.133.165"},allowCredentials = "true")
-@CrossOrigin(origins = {"http://127.0.0.1:5173"}, allowCredentials = "true")
+//@CrossOrigin(origins = {"http://127.0.0.1:5173"}, allowCredentials = "true")
 public class UserController {
     @Resource
     private UserService userService;
@@ -265,7 +265,7 @@ public class UserController {
         // 限流判断（根据 ip）
         String ipAddress = IpUtils.getIpAddress(request);
         redisLimiterManager.doRateLimit("sendCode:" + ipAddress);
-        SMSUtils.sendMessage("瑞吉外卖", "SMS_460765534", phone, code);
+        SMSUtils.sendMessage("组队鸭", "SMS_463612945", phone, code);
         // 使用redis缓存短信验证码,设置有效时间
         redisTemplate.opsForValue().set("sendCode:" + phone, code, 5L, TimeUnit.MINUTES);
         return ResponseResult.success(true);

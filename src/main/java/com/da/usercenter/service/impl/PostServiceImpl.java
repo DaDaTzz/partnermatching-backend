@@ -149,6 +149,23 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             PostFavour postFavour = postFavourMapper.selectOne(postFavourQueryWrapper);
             postVO.setHasFavour(postFavour != null);
         }
+        // 3.获取评论以及评论的用户信息
+        ArrayList<PostCommentUserVO> postCommentUserVOS = new ArrayList<PostCommentUserVO>();
+        LambdaQueryWrapper<PostComment> postCommentLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        postCommentLambdaQueryWrapper.eq(PostComment::getPostId, postVO.getId());
+        List<PostComment> postCommentList = postCommentService.list(postCommentLambdaQueryWrapper);
+        for (PostComment postComment : postCommentList) {
+            PostCommentUserVO postCommentUserVO = new PostCommentUserVO();
+            BeanUtil.copyProperties(postComment,postCommentUserVO);
+            Long uId = postComment.getUserId();
+            User commentUser = userService.getById(uId);
+            UserVO commentUserVO = new UserVO();
+            BeanUtil.copyProperties(commentUser,commentUserVO);
+            postCommentUserVO.setCommentUser(commentUserVO);
+            postCommentUserVOS.add(postCommentUserVO);
+        }
+        postVO.setCommentNum((long) postCommentList.size());
+        postVO.setPostCommentUserVOs(postCommentUserVOS);
         return postVO;
     }
 
@@ -205,11 +222,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             for (PostComment postComment : postCommentList) {
                 PostCommentUserVO postCommentUserVO = new PostCommentUserVO();
                 BeanUtil.copyProperties(postComment,postCommentUserVO);
-                Long userId = postComment.getUserId();
-                User user = userService.getById(userId);
-                UserVO userVO = new UserVO();
-                BeanUtil.copyProperties(user,userVO);
-                postCommentUserVO.setCommentUser(userVO);
+                Long uId = postComment.getUserId();
+                User commentUser = userService.getById(uId);
+                UserVO commentUserVO = new UserVO();
+                BeanUtil.copyProperties(commentUser,commentUserVO);
+                postCommentUserVO.setCommentUser(commentUserVO);
                 postCommentUserVOS.add(postCommentUserVO);
             }
             postVO.setCommentNum((long) postCommentList.size());
