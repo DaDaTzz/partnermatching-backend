@@ -703,6 +703,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!newPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
+        User userInfo = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).one();
+        if(!phone.equals(userInfo.getPhone())){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "该账号已绑定其他手机");
+        }
         // 密码加密
         String password = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
         // 更新
@@ -710,6 +714,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         lambdaQueryWrapper.eq(User::getLoginAccount, loginAccount);
         User user = new User();
         user.setLoginPassword(password);
+        // 移除 redis 中的用户信息
+        long userId = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).one().getId();
+        redisTemplate.delete("user:login:" + userId);
         return this.update(user, lambdaQueryWrapper);
     }
 
