@@ -63,6 +63,10 @@ public class PostController {
      */
     @PostMapping("/add")
     public ResponseResult<Long> addPost(@RequestParam("file") MultipartFile[] files, @RequestParam("title") String title,@RequestParam("content") String content, HttpServletRequest request) {
+        User currentUser = userService.getCurrentUser(request);
+        if (currentUser == null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
         if(StringUtils.isAnyBlank(title,content)){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
