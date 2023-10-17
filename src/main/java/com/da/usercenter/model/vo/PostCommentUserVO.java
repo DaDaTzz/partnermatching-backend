@@ -33,6 +33,11 @@ public class PostCommentUserVO {
     private UserVO commentUser;
 
     /**
+     * 是否有权限删除
+     */
+    private Boolean isCanDelete;
+
+    /**
      * 创建时间
      */
     private Date createTime;

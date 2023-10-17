@@ -154,6 +154,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         LambdaQueryWrapper<PostComment> postCommentLambdaQueryWrapper = new LambdaQueryWrapper<>();
         postCommentLambdaQueryWrapper.eq(PostComment::getPostId, postVO.getId());
         List<PostComment> postCommentList = postCommentService.list(postCommentLambdaQueryWrapper);
+        Long currentUserId = userService.getCurrentUser(request).getId();
         for (PostComment postComment : postCommentList) {
             PostCommentUserVO postCommentUserVO = new PostCommentUserVO();
             BeanUtil.copyProperties(postComment,postCommentUserVO);
@@ -163,6 +164,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             BeanUtil.copyProperties(commentUser,commentUserVO);
             postCommentUserVO.setCommentUser(commentUserVO);
             postCommentUserVOS.add(postCommentUserVO);
+            // 是否有权限删除（帖子的创建者或者自己评论的内容才有权限删除）
+            if(postComment.getUserId().equals(currentUserId)){
+                postCommentUserVO.setIsCanDelete(true);
+            }else{
+                postCommentUserVO.setIsCanDelete(false);
+            }
         }
         postVO.setCommentNum((long) postCommentList.size());
         postVO.setPostCommentUserVOs(postCommentUserVOS);
