@@ -19,6 +19,7 @@ import com.da.usercenter.utils.TokenUtils;
 import com.da.usercenter.utils.ValidateCodeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.util.CollectionUtils;
@@ -315,7 +316,11 @@ public class UserController {
         message.setText("验证码：" + code + "，切勿将验证码泄露给他人，本条验证码有效期5分钟。"); // 发送邮件的内容
         message.setTo(receiveEmail); // 指定要接收邮件的用户邮箱账号
         message.setFrom(SEND_EMAIL); // 发送邮件的邮箱账号，注意一定要和配置文件中的一致！
-        javaMailSender.send(message);// 调用send方法发送邮件即可
+        try {
+            javaMailSender.send(message);// 调用send方法发送邮件即可
+        } catch (MailException e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"系统错误!");
+        }
         // 使用redis缓存短信验证码,设置有效时间
         redisTemplate.opsForValue().set("sendEmail:" + receiveEmail, code, 5L, TimeUnit.MINUTES);
         return ResponseResult.success(true);
