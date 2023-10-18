@@ -7,7 +7,7 @@ import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.manager.RedisLimiterManager;
-import com.da.usercenter.model.dto.team.BindEmailRequest;
+import com.da.usercenter.model.dto.team.BindPhoneRequest;
 import com.da.usercenter.model.dto.team.SendMailRequest;
 import com.da.usercenter.model.dto.user.*;
 import com.da.usercenter.model.entity.User;
@@ -53,7 +53,7 @@ public class UserController {
     private JavaMailSender javaMailSender;
 
     /**
-     * 发送短信的邮箱
+     * 发送邮件的邮箱
      */
     private String SEND_EMAIL = "1349190697@qq.com";
 
@@ -69,7 +69,7 @@ public class UserController {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        long userId = userService.userRegister(userRegisterRequest.getLoginAccount(), userRegisterRequest.getLoginPassword(), userRegisterRequest.getCheckPassword(), userRegisterRequest.getNickname(), userRegisterRequest.getPhone(), userRegisterRequest.getInputCode());
+        long userId = userService.userRegister(userRegisterRequest.getLoginAccount(), userRegisterRequest.getLoginPassword(), userRegisterRequest.getCheckPassword(), userRegisterRequest.getNickname(), userRegisterRequest.getEmail(), userRegisterRequest.getInputCode());
         if(userId > 0){
             // 返回token
             String token = TokenUtils.getToken(String.valueOf(userId));
@@ -256,24 +256,32 @@ public class UserController {
     /**
      * 发送短信验证码
      *
-     * @param sendCodeRequest
+     * @param sendSmsRequest
      * @return
      */
     @PostMapping("/sendSms")
-    public ResponseResult<Boolean> sendSms(@RequestBody SendCodeRequest sendCodeRequest, HttpServletRequest request) {
-        String phone = sendCodeRequest.getPhone();
+    public ResponseResult<Boolean> SendSms(@RequestBody SendSmsRequest sendSmsRequest, HttpServletRequest request) {
+        User currentUser = userService.getCurrentUser(request);
+        if(currentUser == null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
+        String phone = sendSmsRequest.getPhone();
         if (StringUtils.isBlank(phone)) {
-            throw new BusinessException(ErrorCode.NULL_ERROR, "验证码为空");
+            throw new BusinessException(ErrorCode.NULL_ERROR, "手机号为空");
+        }
+        String regex = "^(1[3456789]\\d{9})$";
+        if(!phone.matches(regex)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "手机号格式不正确");
         }
         String code = ValidateCodeUtils.generateValidateCode(4).toString();
         // 调用阿里云api发送短信验证码
         System.out.println("生成的验证码为：" + code);
         // 限流判断（根据 ip）
         String ipAddress = IpUtils.getIpAddress(request);
-        redisLimiterManager.doRateLimit("sendCode:" + ipAddress);
+        redisLimiterManager.doRateLimit("sendSms:" + ipAddress);
         SMSUtils.sendMessage("组队鸭", "SMS_463612945", phone, code);
         // 使用redis缓存短信验证码,设置有效时间
-        redisTemplate.opsForValue().set("sendCode:" + phone, code, 5L, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set("sendSms:" + phone, code, 5L, TimeUnit.MINUTES);
         return ResponseResult.success(true);
     }
 
@@ -286,13 +294,14 @@ public class UserController {
      */
     @PostMapping("/sendEmail")
     public ResponseResult<Boolean> sendEmail(@RequestBody SendMailRequest sendMailRequest, HttpServletRequest request) {
-        User currentUser = userService.getCurrentUser(request);
-        if(currentUser == null){
-            throw new BusinessException(ErrorCode.NOT_LOGIN,"未登录");
-        }
         String receiveEmail = sendMailRequest.getReceiveEmail();
         if (StringUtils.isBlank(receiveEmail)) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "收件箱为空");
+        }
+        // 只支持QQ邮箱
+        String regex = "^[a-zA-Z0-9_\\-]+@qq\\.com$";
+        if(!receiveEmail.matches(regex)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"只支持QQ邮箱");
         }
         // 限流判断（根据 ip）
         String ipAddress = IpUtils.getIpAddress(request);
@@ -313,42 +322,42 @@ public class UserController {
     }
 
     /**
-     * 绑定邮箱
-     * @param bindEmailRequest
+     * 绑定手机
+     * @param bindPhoneRequest
      * @param request
      * @return
      */
-    @PostMapping("/bindEmail")
-    public ResponseResult<Boolean> bindEmail(@RequestBody BindEmailRequest bindEmailRequest, HttpServletRequest request){
+    @PostMapping("/bindPhone")
+    public ResponseResult<Boolean> bindPhone(@RequestBody BindPhoneRequest bindPhoneRequest, HttpServletRequest request){
         User currentUser = userService.getCurrentUser(request);
         if(currentUser == null){
             throw new BusinessException(ErrorCode.NOT_LOGIN,"未登录");
         }
         Long id = currentUser.getId();
-        String receiveEmail = bindEmailRequest.getReceiveEmail();
-        String inputCode = bindEmailRequest.getInputCode();
-        if(StringUtils.isAnyBlank(id.toString(), receiveEmail, inputCode)){
-            throw new BusinessException(ErrorCode.NULL_ERROR,"参数为空");
+        String phone = bindPhoneRequest.getPhone();
+        String inputCode = bindPhoneRequest.getInputCode();
+        if(StringUtils.isAnyBlank(id.toString(), phone, inputCode)){
+            throw new BusinessException(ErrorCode.NULL_ERROR,"手机号为空");
         }
-        String code = redisTemplate.opsForValue().get("sendEmail:" + receiveEmail).toString();
+        String code = redisTemplate.opsForValue().get("sendSms:" + phone).toString();
         if(StringUtils.isBlank(code)){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"验证码已过期");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"手机验证码已过期");
         }
         if(!code.equals(inputCode)){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"验证码错误");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"手机验证码错误");
         }
-        // 一个邮箱只能绑定一个账号
-        Integer count = userService.lambdaQuery().eq(User::getEmail, receiveEmail).count();
+        // 一个手机只能绑定一个账号
+        Integer count = userService.lambdaQuery().eq(User::getPhone, phone).count();
         if(count > 0){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"该邮箱已绑定其他账户");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"该手机已绑定其他账户");
         }
         User user = new User();
         user.setId(currentUser.getId());
-        user.setEmail(receiveEmail);
+        user.setPhone(phone);
         boolean res = userService.updateById(user);
         // 删除 redis 中的验证码信息
         if(res){
-            redisTemplate.delete("sendEmail:" + receiveEmail);
+            redisTemplate.delete("sendSms:" + phone);
         }
         // 执行 update 操作后，更新 redis 中的用户信息
         redisTemplate.delete("user:login:" + user.getId());
@@ -366,14 +375,14 @@ public class UserController {
     @PostMapping("/updatePassword")
     public ResponseResult<Boolean> updatePassword(@RequestBody UpdatePasswordRequest updatePasswordRequest){
         String newPassword = updatePasswordRequest.getNewPassword();
-        String phone = updatePasswordRequest.getPhone();
+        String email = updatePasswordRequest.getEmail();
         String inputCode = updatePasswordRequest.getInputCode();
         String loginAccount = updatePasswordRequest.getLoginAccount();
         String checkPassword = updatePasswordRequest.getCheckPassword();
-        if(StringUtils.isAnyBlank(newPassword, phone, inputCode,loginAccount,checkPassword)){
+        if(StringUtils.isAnyBlank(newPassword, email, inputCode,loginAccount,checkPassword)){
             throw new BusinessException(ErrorCode.NULL_ERROR,"请求参数为空");
         }
-        Boolean res = userService.updatePassword(newPassword, phone,inputCode,loginAccount,checkPassword);
+        Boolean res = userService.updatePassword(newPassword, email,inputCode,loginAccount,checkPassword);
         return ResponseResult.success(res);
 
     }

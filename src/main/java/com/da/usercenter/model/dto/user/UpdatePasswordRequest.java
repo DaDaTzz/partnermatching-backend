@@ -25,7 +25,7 @@ public class UpdatePasswordRequest {
     /**
      * 手机号
      */
-    private String phone;
+    private String email;
 
     /**
      * 验证码

@@ -75,9 +75,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 创建成功的用户 id
      */
     @Override
-    public Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname, String phone, String inputCode) {
+    public Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname, String email, String inputCode) {
         // 非空校验
-        if (StrUtil.isBlank(loginAccount) || StrUtil.isBlank(loginPassword) || StrUtil.isBlank(checkPassword) || StrUtil.isBlank(nickname) || StrUtil.isBlank(inputCode)) {
+        if (org.apache.commons.lang3.StringUtils.isAnyBlank(loginAccount, loginPassword, checkPassword,nickname, email, inputCode)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         // 账户长度不小于6位
@@ -102,18 +102,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (StringUtils.isBlank(nickname)) {
             throw new BusinessException(NULL_ERROR, "昵称能为空");
         }
-        // 账户不能重复
+        // 账号不能重复
         Integer count = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).count();
         if (count > 0) {
             throw new BusinessException(PARAMS_ERROR, "账户名已存在");
         }
-        // 一个手机号只能绑定一个账户
-        Integer count1 = this.lambdaQuery().eq(User::getPhone, phone).count();
+        // 一个邮箱只能绑定一个账号
+        Integer count1 = this.lambdaQuery().eq(User::getEmail, email).count();
         if (count1 > 0) {
-            throw new BusinessException(PARAMS_ERROR, "该手机已注册，请直接登录!");
+            throw new BusinessException(PARAMS_ERROR, "该邮箱已注册，请直接登录!");
         }
-        // 校验手机验证码
-        String code = redisTemplate.opsForValue().get("sendCode:" + phone).toString();
+        // 校验邮箱验证码
+        String code = redisTemplate.opsForValue().get("sendEmail:" + email).toString();
         if (StrUtil.isBlank(code)) {
             throw new BusinessException(PARAMS_ERROR, "验证码已过期");
         }
@@ -127,7 +127,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setLoginAccount(loginAccount);
         user.setLoginPassword(newPassword);
         user.setNickname(nickname);
-        user.setPhone(phone);
+        user.setEmail(email);
         // 默认头像
         user.setProfilePhoto("https://5b0988e595225.cdn.sohucs.com/q_70,c_zoom,w_640/images/20180616/186872ef63844c58876783931c66dddd.gif");
         // 默认简介
@@ -137,7 +137,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.DATABASE_ERROR, "注册失败，未知原因");
         }
         // 删除 redis 中的验证码信息
-        redisTemplate.delete("sendCode:" + phone);
+        redisTemplate.delete("sendEmail:" + email);
         User newUser = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).one();
         User safeUser = this.getSafeUser(newUser);
         // 将用户信息存入redis
@@ -689,11 +689,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public Boolean updatePassword(String newPassword, String phone, String inputCode, String loginAccount, String checkPassword) {
-        if (org.apache.commons.lang3.StringUtils.isAnyBlank(newPassword, phone, inputCode, loginAccount, checkPassword)) {
+    public Boolean updatePassword(String newPassword, String email, String inputCode, String loginAccount, String checkPassword) {
+        if (org.apache.commons.lang3.StringUtils.isAnyBlank(newPassword, email, inputCode, loginAccount, checkPassword)) {
             throw new BusinessException(NULL_ERROR, "请求参数为空");
         }
-        String code = redisTemplate.opsForValue().get("sendCode:" + phone).toString();
+        String code = redisTemplate.opsForValue().get("sendEmail:" + email).toString();
         if (org.apache.commons.lang3.StringUtils.isBlank(code)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码已过期");
         }
@@ -704,8 +704,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
         User userInfo = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).one();
-        if(!phone.equals(userInfo.getPhone())){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "该账号已绑定其他手机");
+        if(!email.equals(userInfo.getEmail())){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "该账号已绑定其他邮箱");
         }
         // 密码加密
         String password = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());

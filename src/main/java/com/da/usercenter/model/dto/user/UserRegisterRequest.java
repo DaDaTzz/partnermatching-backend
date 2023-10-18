@@ -34,9 +34,9 @@ public class UserRegisterRequest implements Serializable {
     private String checkPassword;
 
     /**
-     * 手机号
+     * 邮箱
      */
-    private String phone;
+    private String email;
 
     /**
      * 输入的验证码

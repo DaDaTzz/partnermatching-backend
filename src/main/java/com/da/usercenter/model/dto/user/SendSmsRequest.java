@@ -6,6 +6,6 @@ import lombok.Data;
  * 发送短信验证码
  */
 @Data
-public class SendCodeRequest {
+public class SendSmsRequest {
     private String phone;
 }
