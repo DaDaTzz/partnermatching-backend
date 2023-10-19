@@ -1,7 +1,6 @@
 package com.da.usercenter.controller;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.da.usercenter.common.DeleteRequest;
 import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
