@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -82,12 +83,40 @@ public class TeamController {
         return ResponseResult.success(res);
     }
 
+    /**
+     * 我创建的队伍
+     * @param teamQuery
+     * @param request
+     * @return
+     */
     @GetMapping("/list/create")
     public ResponseResult<List<TeamUserVO>> listMyCreateTeams(TeamQuery teamQuery, HttpServletRequest request){
         List<TeamUserVO> teamUserVOList = teamService.listMyCreateTeams(teamQuery, request);
         return ResponseResult.success(teamUserVOList);
     }
 
+    /**
+     * 我的队伍
+     * @param teamQuery
+     * @param request
+     * @return
+     */
+    @GetMapping("/list/my")
+    public ResponseResult<List<TeamUserVO>> listMyTeams(TeamQuery teamQuery, HttpServletRequest request){
+        List<TeamUserVO> teamUserVOList1 = teamService.listMyJoinTeams(teamQuery, request);
+        List<TeamUserVO> teamUserVOList2 = teamService.listMyCreateTeams(teamQuery, request);
+        ArrayList<TeamUserVO> teamUserVOList = new ArrayList<>();
+        teamUserVOList.addAll(teamUserVOList1);
+        teamUserVOList.addAll(teamUserVOList2);
+        return ResponseResult.success(teamUserVOList);
+    }
+
+    /**
+     * 我加入的队伍
+     * @param teamQuery
+     * @param request
+     * @return
+     */
     @GetMapping("/list/join")
     public ResponseResult<List<TeamUserVO>> listMyJoinTeams(TeamQuery teamQuery, HttpServletRequest request){
         List<TeamUserVO> teamUserVOList = teamService.listMyJoinTeams(teamQuery, request);
