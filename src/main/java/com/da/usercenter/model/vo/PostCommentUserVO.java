@@ -33,6 +33,16 @@ public class PostCommentUserVO {
     private UserVO commentUser;
 
     /**
+     * 是否点赞
+     */
+    private Boolean hasThumb;
+
+    /**
+     * 点赞数
+     */
+    private Long thumbNum;
+
+    /**
      * 是否有权限删除
      */
     private Boolean isCanDelete;

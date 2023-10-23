@@ -74,6 +74,24 @@ CREATE TABLE `post_thumb`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT ='帖子点赞';
 
+
+/**
+  评论点赞表
+ */
+CREATE TABLE `comment_thumb`
+(
+    `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `comment_id`     bigint   NOT NULL COMMENT '帖子 id',
+    `user_id`     bigint   NOT NULL COMMENT '创建用户 id',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_userId` (`user_id`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 149
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci COMMENT ='评论点赞';
+
 /**
   标签表
  */
@@ -186,38 +204,45 @@ CREATE TABLE `user_team`
 CREATE TABLE `room_message`
 (
     `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
-    `teamId`      bigint            DEFAULT NULL COMMENT '队伍id',
-    `user_id`     bigint            DEFAULT NULL COMMENT '用户 id',
-    `user_awata`  varchar(500)      DEFAULT NULL COMMENT '用户头像',
-    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_delete`   tinyint  NOT NULL DEFAULT '0' COMMENT '是否删除',
+    `teamId`      bigint                                  DEFAULT NULL COMMENT '队伍id（公开房间的队伍id为null）',
+    `user_id`     bigint                                  DEFAULT NULL COMMENT '用户 id',
+    `user_awata`  varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '用户头像',
+    `create_time` datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`   tinyint  NOT NULL                       DEFAULT '0' COMMENT '是否删除',
+    `message`     varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '小心',
+    `nickname`    varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '用户昵称',
     PRIMARY KEY (`id`),
     KEY `unidx_userId` (`user_id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 17
+  AUTO_INCREMENT = 108
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='聊天室消息';
+
 
 /**
   用户消息表
  */
 CREATE TABLE `user_message`
 (
-    `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
-    `from_id`     bigint   NOT NULL COMMENT '发送信息用户 id',
-    `to_id`       bigint   NOT NULL COMMENT '接受信息用户 id',
-    `from_awata`  varchar(500)      DEFAULT NULL COMMENT '发送信息用户头像',
-    `to_awata`    varchar(500)      DEFAULT NULL COMMENT '接收信息用户头像',
-    `message`     varchar(500)      DEFAULT NULL COMMENT '信息',
-    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_delete`   tinyint  NOT NULL DEFAULT '0' COMMENT '是否删除',
+    `id`            bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `from_id`       bigint   NOT NULL COMMENT '发送信息用户 id',
+    `to_id`         bigint   NOT NULL COMMENT '接受信息用户 id',
+    `from_awata`    varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '发送信息用户头像',
+    `to_awata`      varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '接收信息用户头像',
+    `message`       varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '信息',
+    `create_time`   datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`   datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`     tinyint  NOT NULL                       DEFAULT '0' COMMENT '是否删除',
+    `from_nickname` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '发送信息用户昵称',
+    `to_nickname`   varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '接收信息用户昵称',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 17
+  AUTO_INCREMENT = 24
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='用户消息';
+
+
 
 
 

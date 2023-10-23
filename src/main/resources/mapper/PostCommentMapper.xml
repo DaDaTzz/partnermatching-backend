@@ -12,10 +12,11 @@
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="is_delete" jdbcType="TINYINT"/>
+            <result property="thumbNum" column="thumb_num" jdbcType="BIGINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,post_id,user_id,
+        id,post_id,user_id,thumb_num
         content,create_time,update_time,
         is_delete
     </sql>

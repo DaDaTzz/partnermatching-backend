@@ -20,6 +20,7 @@ import com.da.usercenter.model.entity.*;
 import com.da.usercenter.model.vo.PostCommentUserVO;
 import com.da.usercenter.model.vo.PostVO;
 import com.da.usercenter.model.vo.UserVO;
+import com.da.usercenter.service.CommentThumbService;
 import com.da.usercenter.service.PostCommentService;
 import com.da.usercenter.service.PostService;
 import com.da.usercenter.service.UserService;
@@ -56,6 +57,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private PostFavourMapper postFavourMapper;
     @Resource
     private PostCommentService postCommentService;
+    @Resource
+    private CommentThumbService commentThumbService;
 
 
     @Override
@@ -164,12 +167,26 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             BeanUtil.copyProperties(commentUser,commentUserVO);
             postCommentUserVO.setCommentUser(commentUserVO);
             postCommentUserVOS.add(postCommentUserVO);
-            // 是否有权限删除（帖子的创建者或者自己评论的内容才有权限删除）
+            // 是否有权限删除评论（帖子的创建者或者自己评论的内容才有权限删除）
             if(postComment.getUserId().equals(currentUserId)){
                 postCommentUserVO.setIsCanDelete(true);
             }else{
                 postCommentUserVO.setIsCanDelete(false);
             }
+            // 是否点赞评论
+            Long commentId = postComment.getId();
+            List<CommentThumb> commentThumbs = commentThumbService.lambdaQuery().eq(CommentThumb::getCommentId, commentId).list();
+            ArrayList<Long> commentThumbUserIds = new ArrayList<>();
+            for (CommentThumb commentThumb : commentThumbs) {
+                commentThumbUserIds.add(commentThumb.getUserId());
+            }
+            if(commentThumbUserIds.contains(currentUserId)){
+                postCommentUserVO.setHasThumb(true);
+            }else{
+                postCommentUserVO.setHasThumb(false);
+            }
+            // 评论的点赞数
+            postCommentUserVO.setThumbNum((long) commentThumbUserIds.size());
         }
         postVO.setCommentNum((long) postCommentList.size());
         postVO.setPostCommentUserVOs(postCommentUserVOS);

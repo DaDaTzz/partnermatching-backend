@@ -11,6 +11,7 @@ import com.da.usercenter.model.vo.UserMessageVO;
 import com.da.usercenter.model.vo.UserVO;
 import com.da.usercenter.service.*;
 import com.google.gson.Gson;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -45,7 +46,9 @@ public class WebSocketController {
         if(currentUser == null){
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
-
+        if(StringUtils.isBlank(msg)){
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
         UserMessageVO userMessageVO = new UserMessageVO();
         userMessageVO.setUserId(currentUser.getId());
         userMessageVO.setNickname(currentUser.getNickname());
@@ -77,6 +80,9 @@ public class WebSocketController {
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
         List<RoomMessage> roomMessageList = roomMessageService.lambdaQuery().isNull(RoomMessage::getTeamid).list();
+        if(roomMessageList.size() == 0){
+            return null;
+        }
         List<UserMessageVO> userMessageVOS = new ArrayList<>();
         for (RoomMessage roomMessage : roomMessageList) {
             UserMessageVO userMessageVO = new UserMessageVO();
@@ -98,6 +104,9 @@ public class WebSocketController {
         User currentUser = userService.getCurrentUser(request);
         if(currentUser == null){
             throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
+        if(StringUtils.isBlank(msg)){
+            throw new BusinessException(ErrorCode.NULL_ERROR);
         }
         // 判断是否为当前队伍成员
         List<UserTeam> userTeamList = userTeamService.lambdaQuery().eq(UserTeam::getTeamId, teamId).list();
@@ -153,6 +162,9 @@ public class WebSocketController {
             throw new BusinessException(ErrorCode.NO_AUTH,"不是本队伍成员");
         }
         List<RoomMessage> roomMessageList = roomMessageService.lambdaQuery().eq(RoomMessage::getTeamid,teamId).list();
+        if(roomMessageList.size() == 0){
+            return null;
+        }
         List<UserMessageVO> userMessageVOS = new ArrayList<>();
         for (RoomMessage roomMessage : roomMessageList) {
             UserMessageVO userMessageVO = new UserMessageVO();
@@ -176,8 +188,10 @@ public class WebSocketController {
         if(currentUser == null){
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
+        if(StringUtils.isBlank(msg)){
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
         long currentUserId = currentUser.getId();
-
         UserMessageVO userMessageVO = new UserMessageVO();
         userMessageVO.setUserId(currentUser.getId());
         userMessageVO.setNickname(currentUser.getNickname());
@@ -214,6 +228,9 @@ public class WebSocketController {
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
         List<UserMessage> userMessageList = userMessageService.lambdaQuery().eq(UserMessage::getFromId, currentUser.getId()).eq(UserMessage::getToId, toId).or().eq(UserMessage::getToId, currentUser.getId()).eq(UserMessage::getFromId, toId).list();
+        if(userMessageList.size() == 0){
+            return null;
+        }
         List<UserMessageVO> userMessageVOS = new ArrayList<>();
         for (UserMessage userMessage : userMessageList) {
             UserMessageVO userMessageVO = new UserMessageVO();

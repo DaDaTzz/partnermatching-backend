@@ -1,9 +1,14 @@
 package com.da.usercenter.config;
 
+import com.da.usercenter.interceptor.RefreshLoginStatusInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import javax.annotation.Resource;
 
 /**
  * 跨域配置
@@ -11,6 +16,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Resource
+    private RedisTemplate redisTemplate;
 
     @Bean
     public WebMvcConfigurer corsConfigurer(){
@@ -34,6 +42,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         .maxAge(3600);
             }
         };
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        // token刷新的拦截器
+        registry.addInterceptor(new RefreshLoginStatusInterceptor(redisTemplate)).addPathPatterns("/**").order(0);
     }
 
 
