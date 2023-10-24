@@ -1,9 +1,11 @@
 package com.da.usercenter.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.da.usercenter.common.DeleteRequest;
 import com.da.usercenter.common.ErrorCode;
+import com.da.usercenter.common.PageRequest;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.exception.ThrowUtils;
@@ -11,16 +13,17 @@ import com.da.usercenter.model.dto.post.PostEditRequest;
 import com.da.usercenter.model.dto.post.PostQueryRequest;
 import com.da.usercenter.model.dto.post.PostUpdateRequest;
 import com.da.usercenter.model.entity.Post;
+import com.da.usercenter.model.entity.PostComment;
+import com.da.usercenter.model.entity.PostThumb;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.vo.PostVO;
-import com.da.usercenter.service.PostService;
-import com.da.usercenter.service.UploadService;
-import com.da.usercenter.service.UserService;
+import com.da.usercenter.service.*;
 import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,6 +52,10 @@ public class PostController {
 
     @Resource
     private UserService userService;
+    @Resource
+    private PostCommentService postCommentService;
+    @Resource
+    private PostThumbService postThumbService;
 
     private final static Gson GSON = new Gson();
 
@@ -111,6 +118,7 @@ public class PostController {
      * @return
      */
     @PostMapping("/delete")
+    @Transactional
     public ResponseResult<Boolean> deletePost(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -124,7 +132,16 @@ public class PostController {
         if (!oldPost.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
+        // 删除博客表
         boolean b = postService.removeById(id);
+        // 删除博客评论表中的相关信息
+        LambdaQueryWrapper<PostComment> postCommentLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        postCommentLambdaQueryWrapper.eq(PostComment::getPostId,id);
+        postCommentService.remove(postCommentLambdaQueryWrapper);
+        // 删除博客点赞表中的相关信息
+        LambdaQueryWrapper<PostThumb> postThumbLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        postThumbLambdaQueryWrapper.eq(PostThumb::getPostId,id);
+        postThumbService.remove(postThumbLambdaQueryWrapper);
         return ResponseResult.success(b);
     }
 
