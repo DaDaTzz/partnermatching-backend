@@ -808,17 +808,25 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         return teamUserVOList;
     }
 
+    /**
+     * 获取队伍用户信息
+     * @param team
+     * @param request
+     * @return
+     */
     @Override
     public TeamUserVO getTeamUserVO(Team team, HttpServletRequest request) {
         User currentUser = userService.getCurrentUser(request);
-        long userId = currentUser.getId();
-        LambdaQueryWrapper<User> userQueryWrapper = new LambdaQueryWrapper<>();
-        Long uId = team.getUserId();
-        if (uId == null) {
+        if(currentUser == null){
+            throw new BusinessException(NOT_LOGIN);
+        }
+        Long id = team.getId();
+        if (id == null) {
             return null;
         }
-        userQueryWrapper.eq(User::getId, userId);
-        User user = userService.getById(userId);
+        // 获取队长信息
+        Team t = this.getById(id);
+        User user = userService.getById(t.getUserId());
         UserVO userVO = new UserVO();
         // 脱敏用户信息
         if (user != null) {
