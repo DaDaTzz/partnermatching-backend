@@ -29,25 +29,6 @@ public class UserMessage implements Serializable {
      */
     private Long toId;
 
-    /**
-     * 发送信息用户昵称
-     */
-    private String fromNickname;
-
-    /**
-     * 接收信息用户昵称
-     */
-    private String toNickname;
-
-    /**
-     * 发送信息用户头像
-     */
-    private String fromAwata;
-
-    /**
-     * 接收信息用户头像
-     */
-    private String toAwata;
 
     /**
      * 信息

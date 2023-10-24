@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.StopWatch;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.da.usercenter.manager.RedisLimiterManager;
+import com.da.usercenter.mapper.PostCommentMapper;
 import com.da.usercenter.mapper.UserFollowsMapper;
 import com.da.usercenter.mapper.UserMapper;
 import com.da.usercenter.model.entity.PostComment;
@@ -26,7 +27,7 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UserCenterApplicationTests {
 
     @Resource
@@ -42,6 +43,8 @@ class UserCenterApplicationTests {
     private JavaMailSender javaMailSender;
     @Resource
     private PostCommentService postCommentService;
+    @Resource
+    private PostCommentMapper postCommentMapper;
 
     @Test
     public void testInsertUser(){
@@ -189,7 +192,13 @@ class UserCenterApplicationTests {
 
     }
 
+    @Test
+    void testGetLikeMyCommentUserIds(){
+        List<Map<String, Object>> likeMyCommentUserIdList = postCommentMapper.getLikeMyCommentUserIdList(1L);
+        for (Map<String, Object> stringObjectMap : likeMyCommentUserIdList) {
+            String content = stringObjectMap.get("内容").toString();
+            System.out.println(content);
+        }
 
-
-
+    }
 }

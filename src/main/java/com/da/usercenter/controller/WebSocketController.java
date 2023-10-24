@@ -57,9 +57,7 @@ public class WebSocketController {
         // 插入数据库
         RoomMessage roomMessage = new RoomMessage();
         roomMessage.setUserId(currentUser.getId());
-        roomMessage.setUserAwata(currentUser.getProfilePhoto());
         roomMessage.setMessage(msg);
-        roomMessage.setNickname(currentUser.getNickname());
         roomMessageService.save(roomMessage);
 
         Gson gson = new Gson();
@@ -87,8 +85,9 @@ public class WebSocketController {
         for (RoomMessage roomMessage : roomMessageList) {
             UserMessageVO userMessageVO = new UserMessageVO();
             userMessageVO.setUserId(roomMessage.getUserId());
-            userMessageVO.setNickname(roomMessage.getNickname());
-            userMessageVO.setProfilePhoto(roomMessage.getUserAwata());
+            User user = userService.getById(roomMessage.getUserId());
+            userMessageVO.setNickname(user.getNickname());
+            userMessageVO.setProfilePhoto(user.getProfilePhoto());
             userMessageVO.setMessage(roomMessage.getMessage());
             userMessageVOS.add(userMessageVO);
         }
@@ -129,9 +128,7 @@ public class WebSocketController {
         RoomMessage roomMessage = new RoomMessage();
         roomMessage.setTeamid(teamId);
         roomMessage.setUserId(currentUser.getId());
-        roomMessage.setUserAwata(currentUser.getProfilePhoto());
         roomMessage.setMessage(msg);
-        roomMessage.setNickname(currentUser.getNickname());
         roomMessageService.save(roomMessage);
         Gson gson = new Gson();
         String userMsgGson = gson.toJson(userMessageVO);
@@ -169,8 +166,9 @@ public class WebSocketController {
         for (RoomMessage roomMessage : roomMessageList) {
             UserMessageVO userMessageVO = new UserMessageVO();
             userMessageVO.setUserId(roomMessage.getUserId());
-            userMessageVO.setNickname(roomMessage.getNickname());
-            userMessageVO.setProfilePhoto(roomMessage.getUserAwata());
+            User user = userService.getById(roomMessage.getUserId());
+            userMessageVO.setNickname(user.getNickname());
+            userMessageVO.setProfilePhoto(user.getProfilePhoto());
             userMessageVO.setMessage(roomMessage.getMessage());
             userMessageVOS.add(userMessageVO);
         }
@@ -203,10 +201,6 @@ public class WebSocketController {
         UserMessage userMessage = new UserMessage();
         userMessage.setFromId(currentUser.getId());
         userMessage.setToId(toId);
-        userMessage.setFromNickname(currentUserInfo.getNickname());
-        userMessage.setToNickname(toUserInfo.getNickname());
-        userMessage.setFromAwata(currentUserInfo.getProfilePhoto());
-        userMessage.setToAwata(toUserInfo.getProfilePhoto());
         userMessage.setMessage(msg);
         userMessageService.save(userMessage);
 
@@ -235,8 +229,9 @@ public class WebSocketController {
         for (UserMessage userMessage : userMessageList) {
             UserMessageVO userMessageVO = new UserMessageVO();
             userMessageVO.setUserId(userMessage.getFromId());
-            userMessageVO.setNickname(userMessage.getFromNickname());
-            userMessageVO.setProfilePhoto(userMessage.getFromAwata());
+            User user = userService.getById(userMessage.getFromId());
+            userMessageVO.setNickname(user.getNickname());
+            userMessageVO.setProfilePhoto(user.getProfilePhoto());
             userMessageVO.setMessage(userMessage.getMessage());
             userMessageVOS.add(userMessageVO);
         }

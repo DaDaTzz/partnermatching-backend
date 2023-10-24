@@ -8,10 +8,6 @@
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="fromId" column="from_id" jdbcType="BIGINT"/>
             <result property="toId" column="to_id" jdbcType="BIGINT"/>
-            <result property="fromAwata" column="from_awata" jdbcType="VARCHAR"/>
-            <result property="toAwata" column="to_awata" jdbcType="VARCHAR"/>
-            <result property="fromNickname" column="from_nickname" jdbcType="VARCHAR"/>
-            <result property="toNickname" column="to_nickname" jdbcType="VARCHAR"/>
             <result property="message" column="message" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
@@ -20,7 +16,7 @@
 
     <sql id="Base_Column_List">
         id,from_id,to_id,
-        from_awata,to_awata,message,
+        message,
         create_time,update_time,is_delete
     </sql>
 </mapper>

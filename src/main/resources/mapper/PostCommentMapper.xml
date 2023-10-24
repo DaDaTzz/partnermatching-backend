@@ -20,4 +20,14 @@
         content,create_time,update_time,
         is_delete
     </sql>
+
+
+
+
+    <!-- 获取给我点赞的用户 集合 -->
+
+
+
+    <!-- 获取给我点赞的用户 id 集合 -->
+
 </mapper>

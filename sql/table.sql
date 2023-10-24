@@ -29,6 +29,7 @@ CREATE TABLE `post_comment`
     `post_id`     bigint   NOT NULL COMMENT '帖子 id',
     `user_id`     bigint   NOT NULL COMMENT '评论用户 id',
     `content`     text     NOT NULL COMMENT '评论内容',
+    'thumb_num'   int      NOT NULL DEFAULT '0' COMMENT '点赞数',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `is_Delete`   tinyint  NOT NULL DEFAULT '0' COMMENT '是否删除',
@@ -81,7 +82,7 @@ CREATE TABLE `post_thumb`
 CREATE TABLE `comment_thumb`
 (
     `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
-    `comment_id`     bigint   NOT NULL COMMENT '帖子 id',
+    `comment_id`  bigint   NOT NULL COMMENT '帖子 id',
     `user_id`     bigint   NOT NULL COMMENT '创建用户 id',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

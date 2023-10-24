@@ -29,20 +29,14 @@ public class RoomMessage implements Serializable {
      */
     private Long userId;
 
-    /**
-     * 用户头像
-     */
-    private String userAwata;
+
 
     /**
      * 消息
      */
     private String message;
 
-    /**
-     * 用户昵称
-     */
-    private String nickname;
+
 
     /**
      * 创建时间
