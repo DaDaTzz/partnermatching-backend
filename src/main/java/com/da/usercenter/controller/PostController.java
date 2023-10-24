@@ -134,8 +134,6 @@ public class PostController {
         if (!oldPost.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
-        // 删除博客表
-        boolean b = postService.removeById(id);
         // 删除博客评论表中的相关信息
         LambdaQueryWrapper<PostComment> postCommentLambdaQueryWrapper = new LambdaQueryWrapper<>();
         postCommentLambdaQueryWrapper.eq(PostComment::getPostId,id);
@@ -160,6 +158,8 @@ public class PostController {
         LambdaQueryWrapper<PostFavour> postFavourLambdaQueryWrapper = new LambdaQueryWrapper<>();
         postFavourLambdaQueryWrapper.eq(PostFavour::getPostId,id);
         postFavourService.remove(postFavourLambdaQueryWrapper);
+        // 删除博客表
+        boolean b = postService.removeById(id);
         return ResponseResult.success(b);
     }
 
