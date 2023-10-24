@@ -1,5 +1,6 @@
 package com.da.usercenter.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
@@ -8,11 +9,14 @@ import com.da.usercenter.mapper.PostCommentMapper;
 import com.da.usercenter.mapper.PostMapper;
 import com.da.usercenter.model.dto.post.DelCommentRequest;
 import com.da.usercenter.model.dto.postcomment.AddCommentRequest;
+import com.da.usercenter.model.entity.CommentThumb;
 import com.da.usercenter.model.entity.PostComment;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.vo.LikeMyVO;
+import com.da.usercenter.service.CommentThumbService;
 import com.da.usercenter.service.PostCommentService;
 import com.da.usercenter.service.UserService;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -40,6 +44,8 @@ public class PostCommentController {
     private PostCommentMapper postCommentMapper;
     @Resource
     private PostMapper postMapper;
+    @Resource
+    private CommentThumbService commentThumbService;
 
     /**
      * 添加评论
@@ -74,6 +80,7 @@ public class PostCommentController {
      * @return
      */
     @PostMapping("/del")
+    @Transactional
     public ResponseResult<Boolean> delComment(@RequestBody DelCommentRequest delCommentRequest, HttpServletRequest request){
         User currentUser = userService.getCurrentUser(request);
         if(currentUser == null){
@@ -86,10 +93,17 @@ public class PostCommentController {
         // 帖子的创建人、自己写的评论、管理员 才有权限删除
         if(postComment.getUserId() != currentUser.getId()){
             if(ADMIN_USER.equals(currentUser.getType()) || delCommentRequest.getCreateUserId() == currentUser.getId()){
+                // 删除评论的点赞相关信息
+                LambdaQueryWrapper<CommentThumb> commentThumbLambdaQueryWrapper = new LambdaQueryWrapper<>();
+                commentThumbLambdaQueryWrapper.eq(CommentThumb::getCommentId, delCommentRequest.getId());
+                commentThumbService.remove(commentThumbLambdaQueryWrapper);
                 return ResponseResult.success(postCommentService.removeById(delCommentRequest.getId()));
             }
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
+        LambdaQueryWrapper<CommentThumb> commentThumbLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        commentThumbLambdaQueryWrapper.eq(CommentThumb::getCommentId, delCommentRequest.getId());
+        commentThumbService.remove(commentThumbLambdaQueryWrapper);
         return ResponseResult.success(postCommentService.removeById(delCommentRequest.getId()));
     }
 

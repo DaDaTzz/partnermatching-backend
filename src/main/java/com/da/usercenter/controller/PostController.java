@@ -12,10 +12,7 @@ import com.da.usercenter.exception.ThrowUtils;
 import com.da.usercenter.model.dto.post.PostEditRequest;
 import com.da.usercenter.model.dto.post.PostQueryRequest;
 import com.da.usercenter.model.dto.post.PostUpdateRequest;
-import com.da.usercenter.model.entity.Post;
-import com.da.usercenter.model.entity.PostComment;
-import com.da.usercenter.model.entity.PostThumb;
-import com.da.usercenter.model.entity.User;
+import com.da.usercenter.model.entity.*;
 import com.da.usercenter.model.vo.PostVO;
 import com.da.usercenter.service.*;
 import com.google.gson.Gson;
@@ -30,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,6 +54,10 @@ public class PostController {
     private PostCommentService postCommentService;
     @Resource
     private PostThumbService postThumbService;
+    @Resource
+    private PostFavourService postFavourService;
+    @Resource
+    private CommentThumbService commentThumbService;
 
     private final static Gson GSON = new Gson();
 
@@ -137,11 +139,27 @@ public class PostController {
         // 删除博客评论表中的相关信息
         LambdaQueryWrapper<PostComment> postCommentLambdaQueryWrapper = new LambdaQueryWrapper<>();
         postCommentLambdaQueryWrapper.eq(PostComment::getPostId,id);
+        List<PostComment> postCommentList = postCommentService.list(postCommentLambdaQueryWrapper);
+        ArrayList<Long> commentIds = new ArrayList<>();
+        for (PostComment postComment : postCommentList) {
+            commentIds.add(postComment.getId());
+        }
+        // 先删除评论的点赞信息
+        for (Long commentId : commentIds) {
+            LambdaQueryWrapper<CommentThumb> commentThumbLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            commentThumbLambdaQueryWrapper.eq(CommentThumb::getCommentId, commentId);
+            commentThumbService.remove(commentThumbLambdaQueryWrapper);
+        }
+        // 再删除评论
         postCommentService.remove(postCommentLambdaQueryWrapper);
         // 删除博客点赞表中的相关信息
         LambdaQueryWrapper<PostThumb> postThumbLambdaQueryWrapper = new LambdaQueryWrapper<>();
         postThumbLambdaQueryWrapper.eq(PostThumb::getPostId,id);
         postThumbService.remove(postThumbLambdaQueryWrapper);
+        // 删除博客收藏表中的相关信息
+        LambdaQueryWrapper<PostFavour> postFavourLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        postFavourLambdaQueryWrapper.eq(PostFavour::getPostId,id);
+        postFavourService.remove(postFavourLambdaQueryWrapper);
         return ResponseResult.success(b);
     }
 
