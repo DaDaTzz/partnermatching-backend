@@ -41,6 +41,12 @@ public class PostCommentController {
     @Resource
     private PostMapper postMapper;
 
+    /**
+     * 添加评论
+     * @param addCommentRequest
+     * @param request
+     * @return
+     */
     @PostMapping("/add")
     public ResponseResult<Long> addComment(@RequestBody AddCommentRequest addCommentRequest, HttpServletRequest request){
         User currentUser = userService.getCurrentUser(request);
@@ -61,6 +67,12 @@ public class PostCommentController {
         return ResponseResult.success(postComment.getId());
     }
 
+    /**
+     * 删除评论
+     * @param delCommentRequest
+     * @param request
+     * @return
+     */
     @PostMapping("/del")
     public ResponseResult<Boolean> delComment(@RequestBody DelCommentRequest delCommentRequest, HttpServletRequest request){
         User currentUser = userService.getCurrentUser(request);
@@ -82,7 +94,7 @@ public class PostCommentController {
     }
 
     /**
-     * 获取给我评论点赞的用户信息
+     * 获取给我点赞的用户信息以及内容
      * @return
      */
     @GetMapping("/like/my")
@@ -92,7 +104,7 @@ public class PostCommentController {
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
         long currentUserId = currentUser.getId();
-        // 获取给我评论点赞的用户信息
+        // 获取给我评论点赞的用户信息以及内容
         List<Map<String, Object>> likeMyCommentUserIdList = postCommentMapper.getLikeMyCommentUserIdList(currentUserId);
         ArrayList<LikeMyVO> likeMyVOS = new ArrayList<>();
         for (Map<String, Object> stringObjectMap : likeMyCommentUserIdList) {
@@ -108,7 +120,7 @@ public class PostCommentController {
             likeMyVO.setCommentOrPost(0);
             likeMyVOS.add(likeMyVO);
         }
-        // 获取给我博客点赞的用户信息
+        // 获取给我博客点赞的用户信息以及内容
         List<Map<String, Object>> likeMyPostUserIdList = postMapper.getLikeMyPostUserIdList(currentUserId);
         for (Map<String, Object> stringObjectMap : likeMyPostUserIdList) {
             LikeMyVO likeMyVO = new LikeMyVO();
