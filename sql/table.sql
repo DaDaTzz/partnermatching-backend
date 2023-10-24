@@ -1,5 +1,23 @@
 /**
-  帖子表
+  评论点赞表
+ */
+CREATE TABLE `comment_thumb`
+(
+    `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `comment_id`  bigint   NOT NULL COMMENT '评论 id',
+    `user_id`     bigint   NOT NULL COMMENT '创建用户 id',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_userId` (`user_id`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 185
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_0900_ai_ci COMMENT ='评论点赞';
+
+
+/**
+  博客表
  */
 CREATE TABLE `post`
 (
@@ -16,12 +34,12 @@ CREATE TABLE `post`
     `img`         varchar(1024) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '图片',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 24
+  AUTO_INCREMENT = 36
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='帖子';
 
 /**
-  帖子评论表
+  博客评论评论表
  */
 CREATE TABLE `post_comment`
 (
@@ -29,20 +47,21 @@ CREATE TABLE `post_comment`
     `post_id`     bigint   NOT NULL COMMENT '帖子 id',
     `user_id`     bigint   NOT NULL COMMENT '评论用户 id',
     `content`     text     NOT NULL COMMENT '评论内容',
-    'thumb_num'   int      NOT NULL DEFAULT '0' COMMENT '点赞数',
     `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `is_Delete`   tinyint  NOT NULL DEFAULT '0' COMMENT '是否删除',
+    `thumb_num`   bigint   NOT NULL DEFAULT '0' COMMENT '点赞数',
     PRIMARY KEY (`id`),
     KEY `idx_post_id` (`post_id`),
     KEY `idx_user_id` (`user_id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 26
+  AUTO_INCREMENT = 85
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT ='帖子评论';
 
+
 /**
-  帖子收藏表
+  博客收藏表
  */
 CREATE TABLE `post_favour`
 (
@@ -54,12 +73,13 @@ CREATE TABLE `post_favour`
     PRIMARY KEY (`id`),
     KEY `idx_userId` (`user_id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 78
+  AUTO_INCREMENT = 112
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT ='帖子收藏';
 
+
 /**
-  帖子点赞表
+  博客点赞表
  */
 CREATE TABLE `post_thumb`
 (
@@ -71,27 +91,29 @@ CREATE TABLE `post_thumb`
     PRIMARY KEY (`id`),
     KEY `idx_userId` (`user_id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 149
+  AUTO_INCREMENT = 183
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT ='帖子点赞';
 
 
 /**
-  评论点赞表
+  聊天室消息表
  */
-CREATE TABLE `comment_thumb`
+CREATE TABLE `room_message`
 (
     `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
-    `comment_id`  bigint   NOT NULL COMMENT '帖子 id',
-    `user_id`     bigint   NOT NULL COMMENT '创建用户 id',
-    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `teamId`      bigint                                  DEFAULT NULL COMMENT '队伍id（公开房间的队伍id为null）',
+    `user_id`     bigint                                  DEFAULT NULL COMMENT '用户 id',
+    `create_time` datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`   tinyint  NOT NULL                       DEFAULT '0' COMMENT '是否删除',
+    `message`     varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '小心',
     PRIMARY KEY (`id`),
-    KEY `idx_userId` (`user_id`)
+    KEY `unidx_userId` (`user_id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 149
+  AUTO_INCREMENT = 119
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci COMMENT ='评论点赞';
+  COLLATE = utf8mb4_unicode_ci COMMENT ='聊天室消息';
 
 /**
   标签表
@@ -112,6 +134,7 @@ CREATE TABLE `tag`
   AUTO_INCREMENT = 17
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='标签';
+
 
 /**
   队伍表
@@ -136,6 +159,7 @@ CREATE TABLE `team`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='队伍';
 
+
 /**
   用户表
  */
@@ -158,9 +182,10 @@ CREATE TABLE `user`
     `profile`        varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         DEFAULT NULL COMMENT '个人简介',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 15162595
+  AUTO_INCREMENT = 15162598
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='用户';
+
 
 /**
   关注关系表
@@ -176,9 +201,27 @@ CREATE TABLE `user_follows`
     `is_delete`   tinyint  NOT NULL DEFAULT '0' COMMENT '是否删除 0-未删除 1-已删除',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 54
+  AUTO_INCREMENT = 62
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci COMMENT ='关注关系';
+
+/**
+  用户消息表
+ */
+CREATE TABLE `user_message`
+(
+    `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `from_id`     bigint   NOT NULL COMMENT '发送信息用户 id',
+    `to_id`       bigint   NOT NULL COMMENT '接受信息用户 id',
+    `message`     varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '信息',
+    `create_time` datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`   tinyint  NOT NULL                       DEFAULT '0' COMMENT '是否删除',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 24
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='用户消息';
 
 /**
   用户队伍关系表
@@ -194,61 +237,7 @@ CREATE TABLE `user_team`
     `is_delete`   tinyint  NOT NULL DEFAULT '0' COMMENT '是否删除',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 166
+  AUTO_INCREMENT = 167
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci COMMENT ='用户队伍关系表';
-
-
-/**
-  聊天室消息表
- */
-CREATE TABLE `room_message`
-(
-    `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
-    `teamId`      bigint                                  DEFAULT NULL COMMENT '队伍id（公开房间的队伍id为null）',
-    `user_id`     bigint                                  DEFAULT NULL COMMENT '用户 id',
-    `user_awata`  varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '用户头像',
-    `create_time` datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_delete`   tinyint  NOT NULL                       DEFAULT '0' COMMENT '是否删除',
-    `message`     varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '小心',
-    `nickname`    varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '用户昵称',
-    PRIMARY KEY (`id`),
-    KEY `unidx_userId` (`user_id`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 108
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci COMMENT ='聊天室消息';
-
-
-/**
-  用户消息表
- */
-CREATE TABLE `user_message`
-(
-    `id`            bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
-    `from_id`       bigint   NOT NULL COMMENT '发送信息用户 id',
-    `to_id`         bigint   NOT NULL COMMENT '接受信息用户 id',
-    `from_awata`    varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '发送信息用户头像',
-    `to_awata`      varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '接收信息用户头像',
-    `message`       varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '信息',
-    `create_time`   datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time`   datetime NOT NULL                       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_delete`     tinyint  NOT NULL                       DEFAULT '0' COMMENT '是否删除',
-    `from_nickname` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '发送信息用户昵称',
-    `to_nickname`   varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '接收信息用户昵称',
-    PRIMARY KEY (`id`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 24
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci COMMENT ='用户消息';
-
-
-
-
-
-
-
-
-
+  COLLATE = utf8mb4_unicode_ci COMMENT ='用户队伍关系'
 
