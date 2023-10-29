@@ -6,5 +6,5 @@ import java.io.IOException;
 import java.util.List;
 
 public interface UploadService {
-    List<String> uploadMsg(MultipartFile[] files, Long id) throws IOException;
+    List<String> uploadImg(MultipartFile[] files, Long id) throws IOException;
 }

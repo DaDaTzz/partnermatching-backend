@@ -63,7 +63,7 @@ public class UploadController {
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
         long id = currentUser.getId();
-        List<String> msgUrlList = uploadService.uploadMsg(files, id);
+        List<String> msgUrlList = uploadService.uploadImg(files, id);
 
         //修改用户头像
         User user = new User();
@@ -96,7 +96,7 @@ public class UploadController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
-        List<String> msgUrlList = uploadService.uploadMsg(files, id);
+        List<String> msgUrlList = uploadService.uploadImg(files, id);
 
         //修改队伍封面
         Team team = new Team();

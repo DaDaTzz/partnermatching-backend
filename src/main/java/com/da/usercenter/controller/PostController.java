@@ -99,7 +99,7 @@ public class PostController {
 
         // 存博文图片
         try {
-            List<String> msgUrlList = uploadService.uploadMsg(files, newPostId);
+            List<String> msgUrlList = uploadService.uploadImg(files, newPostId);
             String msgsJson = GSON.toJson(msgUrlList);
             Post newPort = new Post();
             newPort.setId(newPostId);

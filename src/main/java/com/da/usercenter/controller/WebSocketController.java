@@ -64,6 +64,7 @@ public class WebSocketController {
         String userMsgGson = gson.toJson(userMessageVO);
         webSocket.sendMessage(userMsgGson);
 
+
     }
 
     /**
@@ -189,15 +190,12 @@ public class WebSocketController {
         if(StringUtils.isBlank(msg)){
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        long currentUserId = currentUser.getId();
         UserMessageVO userMessageVO = new UserMessageVO();
         userMessageVO.setUserId(currentUser.getId());
         userMessageVO.setNickname(currentUser.getNickname());
         userMessageVO.setProfilePhoto(currentUser.getProfilePhoto());
         userMessageVO.setMessage(msg);
         // 插入数据库
-        User currentUserInfo = userService.lambdaQuery().eq(User::getId, currentUserId).one();
-        User toUserInfo = userService.lambdaQuery().eq(User::getId, toId).one();
         UserMessage userMessage = new UserMessage();
         userMessage.setFromId(currentUser.getId());
         userMessage.setToId(toId);

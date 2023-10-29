@@ -27,7 +27,7 @@ public interface PostMapper extends BaseMapper<Post> {
      * @param currentUserId
      * @return
      */
-    @Select("select p.title '标题', p.content '内容', p.img, p.id '文章id', pt.user_id '点赞的用户id',pt.create_time '点赞时间' from post p join post_thumb pt on p.id = pt.post_id where p.user_id = #{currentUserId} order by pt.create_time desc;" )
+    @Select("select p.title '标题', p.content '内容', p.img, p.id '文章id', pt.user_id '点赞的用户id',pt.create_time '点赞时间' from post p join post_thumb pt on p.id = pt.post_id where p.user_id = #{currentUserId} and p.is_delete = 0 order by pt.create_time desc;" )
     List<Map<String,Object>> getLikeMyPostUserIdList(Long currentUserId);
 
 

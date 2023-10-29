@@ -23,7 +23,7 @@ public class UploadServiceImpl implements UploadService {
      * @return 图片链接地址
      */
     @Override
-    public List<String> uploadMsg(MultipartFile[] files, Long id) throws IOException {
+    public List<String> uploadImg(MultipartFile[] files, Long id) throws IOException {
         ArrayList<String> imgUrlList = new ArrayList<>();
         for (int i = 0; i < files.length; i++) {
             String originaFileName = files[i].getOriginalFilename();

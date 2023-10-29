@@ -666,26 +666,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(NOT_LOGIN);
         }
         long id = currentUser.getId();
-        List<User> loves = userFriendMapper.getFansByUserId(id);
-        ArrayList<UserVO> loveList = new ArrayList<>();
+        List<User> fans = userFriendMapper.getFansByUserId(id);
+        ArrayList<UserVO> fansList = new ArrayList<>();
+        List<User> loves = userFriendMapper.getLovesByUserId(currentUser.getId());
         ArrayList<Long> loveIdList = new ArrayList<>();
         for (int i = 0; i < loves.size(); i++) {
             loveIdList.add(loves.get(i).getId());
         }
         // 用户信息脱敏
-        for (User love : loves) {
+        for (User fan : fans) {
             UserVO userVO = new UserVO();
-            User safeUser = this.getSafeUser(love);
+            User safeUser = this.getSafeUser(fan);
             BeanUtils.copyProperties(safeUser, userVO);
             // 是否关注
-            if(loveIdList.contains(userVO.getId())){
+            if(loveIdList.contains(fan.getId())){
                 userVO.setIsFollow(true);
             }else{
                 userVO.setIsFollow(false);
             }
-            loveList.add(userVO);
+            fansList.add(userVO);
         }
-        return loveList;
+        return fansList;
     }
 
     @Override

@@ -1,12 +1,17 @@
 package com.da.usercenter.component;
 
+import com.da.usercenter.model.entity.User;
+import com.da.usercenter.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
+import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -20,6 +25,9 @@ public class WebSocket {
  
     //实例一个session，这个session是websocket的session
     private Session session;
+    @Resource
+    private UserService userService;
+
  
     //存放websocket的集合（本次demo不会用到，聊天室的demo会用到）
     private static CopyOnWriteArraySet<WebSocket> webSocketSet = new CopyOnWriteArraySet<>();
@@ -55,5 +63,6 @@ public class WebSocket {
                 e.printStackTrace();
             }
         }
+
     }
 }
