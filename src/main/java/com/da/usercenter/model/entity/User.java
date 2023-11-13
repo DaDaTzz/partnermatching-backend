@@ -74,6 +74,16 @@ public class User implements Serializable {
     private String tags;
 
     /**
+     * 用户积分
+     */
+    private Long integral;
+
+    /**
+     * 是否签到 0-未签到 1-已签到 （每天 0:00 更新）
+     */
+    private Integer sign;
+
+    /**
      * 账号状态
      * 0-正常使用
      * 1-封号

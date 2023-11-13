@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.da.usercenter.common.DeleteRequest;
 import com.da.usercenter.common.ErrorCode;
-import com.da.usercenter.common.PageRequest;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.exception.ThrowUtils;
@@ -99,11 +98,11 @@ public class PostController {
 
         // 存博文图片
         try {
-            List<String> msgUrlList = uploadService.uploadImg(files, newPostId);
-            String msgsJson = GSON.toJson(msgUrlList);
+            List<String> imgUrlList = uploadService.uploadImg(files, newPostId);
+            String imgsJson = GSON.toJson(imgUrlList);
             Post newPort = new Post();
             newPort.setId(newPostId);
-            newPort.setImg(msgsJson);
+            newPort.setImg(imgsJson);
             postService.updateById(newPort);
 
         } catch (IOException e) {
@@ -254,8 +253,6 @@ public class PostController {
                 postService.getQueryWrapper(postQueryRequest));
         return ResponseResult.success(postService.getPostVOPage(postPage, request));
     }
-
-    // endregion
 
 
 

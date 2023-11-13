@@ -32,6 +32,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         // 再次加入前端Origin  localhost！=127.0.0.1
                         .allowedOrigins("http://localhost:5173")
 //                        .allowedOrigins("http://8.130.133.165")
+//                        .allowedOrigins("http://www.iyaya.icu")
                         // 是否允许证书（cookies）
                         .allowCredentials(true)
                         // 设置允许的方法

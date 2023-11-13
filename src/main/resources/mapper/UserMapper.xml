@@ -6,6 +6,7 @@
 
     <resultMap id="BaseResultMap" type="com.da.usercenter.model.entity.User">
             <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="integral" column="integral" jdbcType="BIGINT"/>
             <result property="nickname" column="nickname" jdbcType="VARCHAR"/>
             <result property="loginAccount" column="login_account" jdbcType="VARCHAR"/>
             <result property="profilePhoto" column="profile_photo" jdbcType="VARCHAR"/>
@@ -15,6 +16,7 @@
             <result property="email" column="email" jdbcType="VARCHAR"/>
             <result property="states" column="states" jdbcType="INTEGER"/>
             <result property="type" column="type" jdbcType="INTEGER"/>
+            <result property="sign" column="sign" jdbcType="INTEGER"/>
             <result property="tags" column="tags" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
@@ -23,11 +25,11 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,nickname,login_account,
+        id,nickname,login_account,sign,integral,
         profile_photo,sex,login_password,
         phone,email,states,
         type,tags,create_time,
-        update_time,is_delete,profile
+        update_time,is_delete,
     </sql>
 
 

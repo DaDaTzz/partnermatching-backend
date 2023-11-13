@@ -77,7 +77,6 @@ public class PostFavourController {
         User loginUser = userService.getCurrentUser(request);
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
-        // 限制爬虫
         Page<Post> postPage = postFavourService.listFavourPostByPage(new Page<>(current, size),
                 postService.getQueryWrapper(postQueryRequest), loginUser.getId());
         return ResponseResult.success(postService.getPostVOPage(postPage, request));

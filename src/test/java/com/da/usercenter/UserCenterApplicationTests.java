@@ -7,18 +7,15 @@ import com.da.usercenter.manager.RedisLimiterManager;
 import com.da.usercenter.mapper.PostCommentMapper;
 import com.da.usercenter.mapper.UserFollowsMapper;
 import com.da.usercenter.mapper.UserMapper;
-import com.da.usercenter.model.entity.PostComment;
-import com.da.usercenter.model.entity.User;
-import com.da.usercenter.model.entity.UserTeam;
+import com.da.usercenter.model.entity.*;
 import com.da.usercenter.model.vo.PostCommentUserVO;
 import com.da.usercenter.model.vo.UserVO;
-import com.da.usercenter.service.PostCommentService;
-import com.da.usercenter.service.UserService;
-import com.da.usercenter.service.UserTeamService;
+import com.da.usercenter.service.*;
 import com.da.usercenter.utils.SMSUtils;
 import com.da.usercenter.utils.ValidateCodeUtils;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -45,6 +42,11 @@ class UserCenterApplicationTests {
     private PostCommentService postCommentService;
     @Resource
     private PostCommentMapper postCommentMapper;
+
+    @Resource
+    private GoodsService goodsService;
+    @Resource
+    private OrdersService ordersService ;
 
     @Test
     public void testInsertUser(){
@@ -199,6 +201,17 @@ class UserCenterApplicationTests {
             String content = stringObjectMap.get("内容").toString();
             System.out.println(content);
         }
+    }
 
+    @Test
+    void testQueryGoods(){
+        List<Goods> goodsList = goodsService.list();
+        goodsList.forEach(goods -> System.out.println(goods));
+    }
+
+    @Test
+    void testQueryOrder(){
+        List<Orders> orderList = ordersService.list();
+        orderList.forEach(order -> System.out.println(order));
     }
 }

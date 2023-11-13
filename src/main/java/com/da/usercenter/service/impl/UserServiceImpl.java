@@ -295,6 +295,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         safeUser.setType(user.getType());
         safeUser.setTags(user.getTags());
         safeUser.setProfile(user.getProfile());
+        safeUser.setIntegral(user.getIntegral());
+        safeUser.setSign(user.getSign());
         return safeUser;
     }
 
