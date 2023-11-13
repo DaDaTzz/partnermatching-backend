@@ -260,26 +260,30 @@ CREATE TABLE `goods`
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 89
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci COMMENT ='商品',
+  COLLATE = utf8mb4_0900_ai_ci COMMENT ='商品';
 
 
 /**
-  订单表（id，下单用户id，收货地址，商品id，订单状态（“未完成-0”/”已完成-1“ 默认未完成））
+  订单表
  */
 CREATE TABLE `orders`
 (
-    `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
-    `user_id`     bigint   NOT NULL COMMENT '用户 id',
-    `address`     varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '收货地址',
-    `states`      int      NOT NULL                                              DEFAULT '0' COMMENT '0-未完成 1-已完成',
-    `create_time` datetime NOT NULL                                              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `update_time` datetime NOT NULL                                              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_delete`   tinyint  NOT NULL                                              DEFAULT '0' COMMENT '是否删除',
+    `id`           bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `user_id`      bigint   NOT NULL COMMENT '用户 id',
+    `address`      varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '收货地址',
+    `states`       int      NOT NULL                                              DEFAULT '0' COMMENT '0-未完成 1-已完成',
+    `create_time`  datetime NOT NULL                                              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`  datetime NOT NULL                                              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`    tinyint  NOT NULL                                              DEFAULT '0' COMMENT '是否删除',
+    `goods_id`     bigint   NOT NULL COMMENT '商品id',
+    `goods_number` int      NOT NULL COMMENT '下单数量',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
-  AUTO_INCREMENT = 89
+  AUTO_INCREMENT = 94
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT ='订单'
+
+
 
 
 

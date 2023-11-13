@@ -8,6 +8,7 @@
             <id property="id" column="id" jdbcType="BIGINT"/>
             <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="price" column="price" jdbcType="BIGINT"/>
+            <result property="number" column="number" jdbcType="BIGINT"/>
             <result property="image" column="image" jdbcType="VARCHAR"/>
             <result property="description" column="description" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
@@ -16,7 +17,7 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,name,price,description,
+        id,name,price,description,number,
         image,create_time,update_time,
         is_Delete
     </sql>

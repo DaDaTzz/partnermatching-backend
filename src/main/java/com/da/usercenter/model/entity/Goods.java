@@ -30,6 +30,11 @@ public class Goods implements Serializable {
     private Long price;
 
     /**
+     * 库存
+     */
+    private Long number;
+
+    /**
      * 图片
      */
     private String image;

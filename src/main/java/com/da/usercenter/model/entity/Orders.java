@@ -30,6 +30,16 @@ public class Orders implements Serializable {
     private String address;
 
     /**
+     * 商品 id
+     */
+    private Long goodsId;
+
+    /**
+     * 下单数量
+     */
+    private Integer goodsNumber;
+
+    /**
      * 0-未完成 1-已完成
      */
     private Integer states;
