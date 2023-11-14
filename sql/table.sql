@@ -255,7 +255,8 @@ CREATE TABLE `goods`
     `image`       varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci         DEFAULT NULL COMMENT '图片',
     `create_time` datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` datetime                                                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `is_Delete`   tinyint                                                       NOT NULL DEFAULT '0' COMMENT '是否删除',
+    `is_delete`   tinyint                                                       NOT NULL DEFAULT '0' COMMENT '是否删除',
+    `number`      bigint                                                        NOT NULL DEFAULT '0' COMMENT '商品数量',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 89
@@ -270,6 +271,7 @@ CREATE TABLE `orders`
 (
     `id`           bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
     `user_id`      bigint   NOT NULL COMMENT '用户 id',
+    `amount`       bigint   NOT NULL COMMENT '金额',
     `address`      varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '收货地址',
     `states`       int      NOT NULL                                              DEFAULT '0' COMMENT '0-未完成 1-已完成',
     `create_time`  datetime NOT NULL                                              DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

@@ -410,7 +410,7 @@ public class UserController {
         }
         // 不能重复签到
         if (currentUser.getSign() == 1) {
-            throw new BusinessException(ErrorCode.DATABASE_ERROR, "今日已签到！");
+            throw new BusinessException(ErrorCode.DATABASE_ERROR, "今日已完成签到！");
         }
         User user = new User();
         user.setId(currentUser.getId());

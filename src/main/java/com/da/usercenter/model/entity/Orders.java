@@ -16,7 +16,7 @@ public class Orders implements Serializable {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -43,6 +43,11 @@ public class Orders implements Serializable {
      * 0-未完成 1-已完成
      */
     private Integer states;
+
+    /**
+     * 金额
+     */
+    private Long amount;
 
     /**
      * 创建时间

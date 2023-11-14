@@ -1,5 +1,6 @@
 package com.da.usercenter.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
@@ -8,21 +9,21 @@ import com.da.usercenter.model.dto.orders.CreateOrderRequest;
 import com.da.usercenter.model.entity.Goods;
 import com.da.usercenter.model.entity.Orders;
 import com.da.usercenter.model.entity.User;
+import com.da.usercenter.model.vo.OrdersVO;
 import com.da.usercenter.service.GoodsService;
 import com.da.usercenter.service.OrdersService;
 import com.da.usercenter.service.UserService;
-import javafx.scene.layout.BorderStrokeStyle;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,8 +84,40 @@ public class OrdersController {
         orders.setUserId(currentUser.getId());
         orders.setAddress(address);
         orders.setGoodsId(goodsId);
+        orders.setAmount(price);
         orders.setGoodsNumber(goodsNumber);
         // TODO: 2023/11/14 优化：使用消息队列
         return ResponseResult.success(ordersService.save(orders));
     }
+
+
+    /**
+     * 我的订单
+     * @param request
+     * @return
+     */
+    @GetMapping("/my")
+    public ResponseResult<List<OrdersVO>> getMyOrders(Integer states, HttpServletRequest request){
+        User currentUser = userService.getCurrentUser(request);
+        ThrowUtils.throwIf(currentUser == null, new BusinessException(ErrorCode.NOT_LOGIN));
+        LambdaQueryWrapper<Orders> ordersLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        ordersLambdaQueryWrapper.eq(Orders::getUserId, currentUser.getId());
+        ordersLambdaQueryWrapper.eq(states != null && states >= 0, Orders::getStates, states);
+        ordersLambdaQueryWrapper.orderByDesc(Orders::getCreateTime);
+        List<Orders> ordersList = ordersService.list(ordersLambdaQueryWrapper);
+        if(ordersList.size() == 0){
+            return ResponseResult.success(new ArrayList<>());
+        }
+        ArrayList<OrdersVO> ordersVOList = new ArrayList<>();
+        for (Orders orders : ordersList) {
+            OrdersVO ordersVO = new OrdersVO();
+            BeanUtils.copyProperties(orders, ordersVO);
+            Goods goods = goodsService.getById(orders.getGoodsId());
+            ordersVO.setGoods(goods);
+            ordersVOList.add(ordersVO);
+        }
+        return ResponseResult.success(ordersVOList);
+    }
+
+
 }
