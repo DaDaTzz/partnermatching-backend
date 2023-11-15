@@ -214,4 +214,16 @@ class UserCenterApplicationTests {
         List<Orders> orderList = ordersService.list();
         orderList.forEach(order -> System.out.println(order));
     }
+
+    @Test
+    void testTime(){
+        User user = userService.getById(1);
+        Date createTime = user.getCreateTime();
+        Orders orders = ordersService.getById(95);
+        long ordersCreateTime = createTime.toInstant().toEpochMilli();
+        long now = new Date().toInstant().toEpochMilli();
+        long diff = now - ordersCreateTime;
+        long days = diff / (24 * 60 * 60 * 1000);
+        System.out.println(days);
+    }
 }
