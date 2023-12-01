@@ -64,7 +64,6 @@ public class WebSocketController {
         String userMsgGson = gson.toJson(userMessageVO);
         webSocket.sendMessage(userMsgGson);
 
-
     }
 
     /**

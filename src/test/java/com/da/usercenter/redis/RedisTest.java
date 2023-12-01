@@ -9,7 +9,7 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import javax.annotation.Resource;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class RedisTest {
 
     @Resource

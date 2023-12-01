@@ -28,6 +28,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -373,6 +375,8 @@ public class UserController {
         User safeUser = userService.getSafeUser(u);
         redisTemplate.opsForValue().set("user:login:" + id, safeUser, 30, TimeUnit.MINUTES);
         return ResponseResult.success(res);
+
+
     }
 
     /**

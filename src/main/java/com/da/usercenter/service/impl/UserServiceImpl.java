@@ -88,7 +88,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (loginPassword.length() < 8 || checkPassword.length() < 8) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度小于8位");
         }
-        // 账户不能包含特殊字符
+        // 账户不能包含特殊字符（正则）
         String regEx = "[ _`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]|\n|\r|\t";
         Pattern p = Pattern.compile(regEx);
         if (p.matcher(loginAccount).find()) {
@@ -100,17 +100,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 昵称不为空
         if (StringUtils.isBlank(nickname)) {
-            throw new BusinessException(NULL_ERROR, "昵称能为空");
+            throw new BusinessException(NULL_ERROR, "昵称不能为空");
         }
         // 账号不能重复
         Integer count = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).count();
         if (count > 0) {
-            throw new BusinessException(PARAMS_ERROR, "账户名已存在");
+            throw new BusinessException(PARAMS_ERROR, "账号已存在");
         }
         // 一个邮箱只能绑定一个账号
-        Integer count1 = this.lambdaQuery().eq(User::getEmail, email).count();
-        if (count1 > 0) {
-            throw new BusinessException(PARAMS_ERROR, "该邮箱已注册，请直接登录!");
+        Integer number = this.lambdaQuery().eq(User::getEmail, email).count();
+        if (number > 0) {
+            throw new BusinessException(PARAMS_ERROR, "该邮箱已绑定其它账号!");
         }
         // 校验邮箱验证码
         String code = redisTemplate.opsForValue().get("sendEmail:" + email).toString();
@@ -121,11 +121,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(PARAMS_ERROR, "验证码错误");
         }
         // 密码加密
-        String newPassword = DigestUtils.md5DigestAsHex((SALT + loginPassword).getBytes());
+        String safePassword = DigestUtils.md5DigestAsHex((SALT + loginPassword).getBytes());
         // 插入数据
         User user = new User();
         user.setLoginAccount(loginAccount);
-        user.setLoginPassword(newPassword);
+        user.setLoginPassword(safePassword);
         user.setNickname(nickname);
         user.setEmail(email);
         // 默认头像
@@ -134,13 +134,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setProfile("这个人很懒，什么都没留下！");
         boolean saveResult = this.save(user);
         if (!saveResult) {
-            throw new BusinessException(ErrorCode.DATABASE_ERROR, "注册失败，未知原因");
+            throw new BusinessException(ErrorCode.DATABASE_ERROR, "注册失败，数据库异常！");
         }
-        // 删除 redis 中的验证码信息
+        // 删除 redis 中的验证码缓存
         redisTemplate.delete("sendEmail:" + email);
         User newUser = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).one();
         User safeUser = this.getSafeUser(newUser);
-        // 将用户信息存入redis
+        // 保存用户登录态（存入 redis）
         ValueOperations valueOperations = redisTemplate.opsForValue();
         valueOperations.set("user:login:" + newUser.getId(), safeUser, 30, TimeUnit.MINUTES);
         return newUser.getId();
@@ -184,12 +184,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号和密码不匹配");
         }
         User safeUser = this.getSafeUser(user);
-        // 将登录信息存入redis 单点登录
+        // 保存用户登录态 （存入redis）
         ValueOperations valueOperations = redisTemplate.opsForValue();
         valueOperations.set("user:login:" + user.getId(), safeUser, 30, TimeUnit.MINUTES);
         return safeUser;
     }
 
+
+    /**
+     * 获取 UserVO 对象
+     * @param user
+     * @return
+     */
     @Override
     public UserVO getUserVO(User user) {
         if (user == null) {
@@ -201,7 +207,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 获取当前登录用户（允许未登录）
+     * 获取当前登录用户（允许未登录，不抛异常）
      *
      * @param request
      * @return
@@ -277,6 +283,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
 
+    /**
+     * 返回安全的用户信息（信息过滤）
+     * @param user 用户全量信息
+     * @return
+     */
     @Override
     public User getSafeUser(User user) {
         if (user == null) {
@@ -345,7 +356,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(LOGIN_EXPIRE);
         }
         String userId = TokenUtils.getAccount(token);
-        // 移除 redis 中的用户信息
+        // 移除用户登录态
         Boolean res = redisTemplate.delete("user:login:" + userId);
         return res;
     }
@@ -501,11 +512,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
             List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
             }.getType());
-            // 计算分数
+            // 计算分数（相似度）
             long distance = AlgorithmUtil.minDistance(tagList, userTagList);
             list.add(new Pair<>(user, distance));
         }
-        // 按编辑距离由小到大排序
+        // 按编辑距离由小到大排序（距离越小，相似度越高）
         List<Pair<User, Long>> topUserPairList = list.stream()
                 .sorted((a, b) -> (int) (a.getValue() - b.getValue()))
                 .limit(num)
@@ -536,11 +547,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             User user = finalUserList.get(i);
             UserVO userVO = new UserVO();
             BeanUtils.copyProperties(user, userVO);
-            if (loveIdList.contains(user.getId())) {
-                userVO.setIsFollow(true);
-            }else{
-                userVO.setIsFollow(false);
-            }
+            userVO.setIsFollow(loveIdList.contains(user.getId()));
             userVOS.add(userVO);
         }
         return userVOS;
@@ -681,11 +688,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             User safeUser = this.getSafeUser(fan);
             BeanUtils.copyProperties(safeUser, userVO);
             // 是否关注
-            if(loveIdList.contains(fan.getId())){
-                userVO.setIsFollow(true);
-            }else{
-                userVO.setIsFollow(false);
-            }
+            userVO.setIsFollow(loveIdList.contains(fan.getId()));
             fansList.add(userVO);
         }
         return fansList;

@@ -83,10 +83,6 @@ public class PostController {
         p.setContent(content);
         p.setTitle(title);
         BeanUtils.copyProperties(p, post);
-//        List<String> tags = postAddRequest.getTags();
-//        if (tags != null) {
-//            post.setTags(GSON.toJson(tags));
-//        }
         postService.validPost(post, true);
         User loginUser = userService.getCurrentUser(request);
         post.setUserId(loginUser.getId());

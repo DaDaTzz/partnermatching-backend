@@ -1,4 +1,5 @@
 package com.da.usercenter;
+import java.util.Date;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.StopWatch;
@@ -14,6 +15,7 @@ import com.da.usercenter.service.*;
 import com.da.usercenter.utils.SMSUtils;
 import com.da.usercenter.utils.ValidateCodeUtils;
 import com.google.gson.Gson;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -216,7 +218,7 @@ class UserCenterApplicationTests {
     }
 
     @Test
-    void testTime(){
+    void testTimeMillToDays(){
         User user = userService.getById(1);
         Date createTime = user.getCreateTime();
         Orders orders = ordersService.getById(95);
@@ -225,5 +227,28 @@ class UserCenterApplicationTests {
         long diff = now - ordersCreateTime;
         long days = diff / (24 * 60 * 60 * 1000);
         System.out.println(days);
+    }
+
+    @Test
+    void testInsertUser2(){
+        User user = new User();
+        user.setNickname("testUser");
+        user.setSex(0);
+        user.setLoginAccount("kkkkkkkk");
+        user.setProfile("测试账号");
+        user.setLoginPassword("kkkkkkkk");
+        user.setPhone("18370952133");
+        user.setEmail("125@qq.com");
+        user.setTags("[]");
+        user.setIntegral(0L);
+        user.setSign(0);
+        user.setStates(0);
+        user.setProfilePhoto("https://123.com");
+        user.setType(0);
+        user.setIsDelete(0);
+        user.setCreateTime(new Date());
+        user.setUpdateTime(new Date());
+        boolean result = userService.save(user);
+        Assertions.assertEquals(result, true);
     }
 }

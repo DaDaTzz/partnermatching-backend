@@ -3,7 +3,7 @@ package com.da.usercenter.exception;
 import com.da.usercenter.common.ErrorCode;
 
 /**
- * 自定义异常类
+ * 自定义业务异常类
  * @author Da
  * @date 2023/6/12 16:44
  */

@@ -6,6 +6,7 @@ import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.exception.ThrowUtils;
 import com.da.usercenter.model.dto.orders.CreateOrderRequest;
+import com.da.usercenter.model.dto.orders.GetOrdersByIdRequest;
 import com.da.usercenter.model.dto.orders.RefundRequest;
 import com.da.usercenter.model.entity.Goods;
 import com.da.usercenter.model.entity.Orders;
@@ -26,8 +27,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -213,5 +212,29 @@ public class OrdersController {
         return ResponseResult.success(false);
     }
 
+
+    /**
+     * 根据 id 获取订单信息
+     * @param getOrdersByIdRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/get/vo")
+    public ResponseResult<OrdersVO> getOrdersById(@RequestBody GetOrdersByIdRequest getOrdersByIdRequest, HttpServletRequest request){
+        User currentUser = userService.getCurrentUser(request);
+        if(currentUser == null){
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
+        Long orderId = getOrdersByIdRequest.getOrderId();
+        Orders orders = ordersService.getById(orderId);
+        if(orders == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        OrdersVO ordersVO = new OrdersVO();
+        BeanUtils.copyProperties(orders, ordersVO);
+        Goods goods = goodsService.getById(orders.getGoodsId());
+        ordersVO.setGoods(goods);
+        return ResponseResult.success(ordersVO);
+    }
 
 }
