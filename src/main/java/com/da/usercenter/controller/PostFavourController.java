@@ -61,6 +61,7 @@ public class PostFavourController {
         int result = postFavourService.doPostFavour(postId, loginUser);
         return ResponseResult.success(result);
     }
+            
 
     /**
      * 获取我收藏的帖子列表

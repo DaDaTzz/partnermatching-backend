@@ -119,7 +119,8 @@ public class PostCommentController {
         }
         long currentUserId = currentUser.getId();
         // 获取给我评论点赞的用户信息以及内容
-        List<Map<String, Object>> likeMyCommentUserIdList = postCommentMapper.getLikeMyCommentUserIdList(currentUserId);
+        List<Map<String, Object>> likeMyCommentUserIdList =
+                postCommentMapper.getLikeMyCommentUserIdList(currentUserId);
         ArrayList<LikeMyVO> likeMyVOS = new ArrayList<>();
         for (Map<String, Object> stringObjectMap : likeMyCommentUserIdList) {
             LikeMyVO likeMyVO = new LikeMyVO();

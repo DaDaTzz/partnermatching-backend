@@ -120,12 +120,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!code.equals(inputCode)) {
             throw new BusinessException(PARAMS_ERROR, "验证码错误");
         }
-        // 密码加密
-        String safePassword = DigestUtils.md5DigestAsHex((SALT + loginPassword).getBytes());
+        // 密码加密（前端加密，防止被抓包）
+        //String safePassword = DigestUtils.md5DigestAsHex((SALT + loginPassword).getBytes());
         // 插入数据
         User user = new User();
         user.setLoginAccount(loginAccount);
-        user.setLoginPassword(safePassword);
+        user.setLoginPassword(loginPassword);
         user.setNickname(nickname);
         user.setEmail(email);
         // 默认头像
@@ -175,10 +175,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (p.matcher(loginAccount).find()) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号包含特殊字符");
         }
-        // 密码加密
-        String newPassword = DigestUtils.md5DigestAsHex((SALT + loginPassword).getBytes());
+        // 密码加密（前端做加密，防止被抓包）
+        //String newPassword = DigestUtils.md5DigestAsHex((SALT + loginPassword).getBytes());
         // 校验密码是否输入正确
-        User user = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).eq(User::getLoginPassword, newPassword).one();
+        User user = this.lambdaQuery().eq(User::getLoginAccount, loginAccount).eq(User::getLoginPassword, loginPassword).one();
         if (user == null) {
             log.info("loginAccount not matcher loginPassword");
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号和密码不匹配");
