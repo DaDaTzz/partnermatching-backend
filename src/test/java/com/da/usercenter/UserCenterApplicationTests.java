@@ -251,4 +251,12 @@ class UserCenterApplicationTests {
         boolean result = userService.save(user);
         Assertions.assertEquals(result, true);
     }
+
+    @Resource
+    private TrendsService trendsService;
+    @Test
+    void trendsQuery(){
+        List<Trends> trends = trendsService.list();
+        trends.forEach(trends1 -> System.out.println(trends1));
+    }
 }

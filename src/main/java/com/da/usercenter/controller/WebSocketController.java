@@ -16,8 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/message")
@@ -82,6 +81,7 @@ public class WebSocketController {
             return null;
         }
         List<UserMessageVO> userMessageVOS = new ArrayList<>();
+        HashMap<Date, List<UserMessageVO>> messageHashMap = new HashMap<>();
         for (RoomMessage roomMessage : roomMessageList) {
             UserMessageVO userMessageVO = new UserMessageVO();
             userMessageVO.setUserId(roomMessage.getUserId());
@@ -89,7 +89,21 @@ public class WebSocketController {
             userMessageVO.setNickname(user.getNickname());
             userMessageVO.setProfilePhoto(user.getProfilePhoto());
             userMessageVO.setMessage(roomMessage.getMessage());
+            userMessageVO.setSendTime(roomMessage.getCreateTime());
             userMessageVOS.add(userMessageVO);
+        }
+        for (UserMessageVO userMessageVO : userMessageVOS) {
+            Date sendTime = userMessageVO.getSendTime();
+            if(messageHashMap.containsKey(sendTime)){
+                messageHashMap.get(sendTime).add(userMessageVO);
+            }else{
+                ArrayList<UserMessageVO> list = new ArrayList<>();
+                list.add(userMessageVO);
+                messageHashMap.put(sendTime, list);
+            }
+        }
+        for(Map.Entry<Date, List<UserMessageVO>> entry : messageHashMap.entrySet()){
+            System.out.println(entry.getKey() + ":" + entry.getValue());
         }
         return ResponseResult.success(userMessageVOS);
     }

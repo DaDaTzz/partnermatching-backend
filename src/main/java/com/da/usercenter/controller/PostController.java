@@ -203,26 +203,26 @@ public class PostController {
         return ResponseResult.success(postService.getPostVO(post, request));
     }
 
-    /**
-     * 分页获取列表（封装类）
-     *
-     * @param postQueryRequest
-     * @param request
-     * @return
-     */
-    @GetMapping("/list/page/vo")
-    public ResponseResult<Page<PostVO>> listPostVOByPage(PostQueryRequest postQueryRequest,
-            HttpServletRequest request) {
-        long current = postQueryRequest.getCurrent();
-        long size = postQueryRequest.getPageSize();
-        // 限制爬虫
-        ThrowUtils.throwIf(size > 60, ErrorCode.PARAMS_ERROR);
-        QueryWrapper<Post> queryWrapper = postService.getQueryWrapper(postQueryRequest);
-        queryWrapper.orderByDesc("thumb_num");
-        Page<Post> postPage = postService.page(new Page<>(current, size),
-               queryWrapper);
-        return ResponseResult.success(postService.getPostVOPage(postPage, request));
-    }
+        /**
+         * 分页获取列表（封装类）
+         *
+         * @param postQueryRequest
+         * @param request
+         * @return
+         */
+        @GetMapping("/list/page/vo")
+        public ResponseResult<Page<PostVO>> listPostVOByPage(PostQueryRequest postQueryRequest,
+                HttpServletRequest request) {
+            long current = postQueryRequest.getCurrent();
+            long size = postQueryRequest.getPageSize();
+            // 限制爬虫
+            ThrowUtils.throwIf(size > 60, ErrorCode.PARAMS_ERROR);
+            QueryWrapper<Post> queryWrapper = postService.getQueryWrapper(postQueryRequest);
+            queryWrapper.orderByDesc("thumb_num");
+            Page<Post> postPage = postService.page(new Page<>(current, size),
+                   queryWrapper);
+            return ResponseResult.success(postService.getPostVOPage(postPage, request));
+        }
 
 
 

@@ -287,6 +287,27 @@ CREATE TABLE `orders`
 
 
 
+/**
+  朋友圈表
+ */
+CREATE TABLE `trends`
+(
+    `id`          bigint   NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `content`     text COLLATE utf8mb4_unicode_ci COMMENT '内容',
+    `thumb_num`   int      NOT NULL                        DEFAULT '0' COMMENT '点赞数',
+    `user_id`     bigint   NOT NULL COMMENT '用户 id',
+    `create_time` datetime NOT NULL                        DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` datetime NOT NULL                        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `is_delete`   tinyint  NOT NULL                        DEFAULT '0' COMMENT '是否删除',
+    `img`         varchar(1024) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '图片',
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 36
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci COMMENT ='朋友圈';
+
+
+
 
 
 

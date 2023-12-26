@@ -62,9 +62,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private UserFollowsMapper userFriendMapper;
-    @Resource
-    private UserMapper userMapper;
-
 
     /**
      * 注册
@@ -75,7 +72,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 创建成功的用户 id
      */
     @Override
-    public Long userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname, String email, String inputCode) {
+    public Long  userRegister(String loginAccount, String loginPassword, String checkPassword, String nickname, String email, String inputCode) {
         // 非空校验
         if (org.apache.commons.lang3.StringUtils.isAnyBlank(loginAccount, loginPassword, checkPassword,nickname, email, inputCode)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
