@@ -1,28 +1,32 @@
 package com.da.usercenter.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
+import com.da.usercenter.exception.ThrowUtils;
+import com.da.usercenter.model.dto.trends.TrendsQueryRequest;
+import com.da.usercenter.model.entity.Post;
 import com.da.usercenter.model.entity.Trends;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.entity.UserFollows;
 import com.da.usercenter.model.vo.UserTrendsVO;
 import com.da.usercenter.service.TrendsService;
+import com.da.usercenter.service.UploadService;
 import com.da.usercenter.service.UserFollowsService;
 import com.da.usercenter.service.UserService;
+import com.google.gson.Gson;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 
 @RestController
 @RequestMapping("/trends")
@@ -34,6 +38,10 @@ public class TrendsController {
     private UserService userService;
     @Resource
     private UserFollowsService userFollowsService;
+    @Resource
+    private UploadService uploadService;
+
+    private final static Gson GSON = new Gson();
 
 
     /**
@@ -91,6 +99,103 @@ public class TrendsController {
             }
         });
         return ResponseResult.success(userTrendsVOS);
+    }
+
+    /**
+     * 分页获取用户动态信息
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/list/page")
+    public ResponseResult<Page<Trends>> getTrendsByPage(HttpServletRequest request, TrendsQueryRequest trendsQueryRequest) {
+        long current = trendsQueryRequest.getCurrent();
+        long size = trendsQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 60, ErrorCode.PARAMS_ERROR);
+        User currentUser = userService.getCurrentUser(request);
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
+        // 只有管理员有权限查询所有用户动态信息
+        if (currentUser.getType() != 1) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        QueryWrapper<Trends> queryWrapper = trendsService.getQueryWrapper(trendsQueryRequest);
+        Page<Trends> trendsPage = trendsService.page(new Page<>(current, size), queryWrapper);
+        return ResponseResult.success(trendsPage);
+
+    }
+
+
+    /**
+     * 根据 id 删除动态
+     *
+     * @param request
+     * @param trends
+     * @return
+     */
+    @PostMapping("/delete")
+    public ResponseResult<Boolean> deleteTrendsById(HttpServletRequest request, Trends trends) {
+        User currentUser = userService.getCurrentUser(request);
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
+        long currentUserId = currentUser.getId();
+        Long trendsUserId = trends.getUserId();
+        // 判断是否存在
+        Trends t = trendsService.getById(trends.getId());
+        if (t == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 仅发动态本人或管理员可以删除动态
+        if (currentUserId != trendsUserId && currentUser.getType() != 1) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        boolean result = trendsService.removeById(trends.getId());
+        return ResponseResult.success(result);
+    }
+
+
+    /**
+     * 新增动态（发朋友圈）
+     *
+     * @param files   图片文件流
+     * @param content 内容
+     * @param request 请求对象
+     * @return 新动态 ID
+     */
+    @PostMapping("/add")
+    public ResponseResult<Long> addTrends(@RequestParam("file") MultipartFile[] files, @RequestParam("content") String content, HttpServletRequest request) {
+        User currentUser = userService.getCurrentUser(request);
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
+        Trends trends = new Trends();
+        Trends t = new Trends();
+        t.setContent(content);
+        BeanUtils.copyProperties(t, trends);
+        trendsService.validTrends(trends, true);
+        User loginUser = userService.getCurrentUser(request);
+        trends.setUserId(loginUser.getId());
+        trends.setThumbNum(0);
+        boolean result = trendsService.save(trends);
+        ThrowUtils.throwIf(!result, ErrorCode.PARAMS_ERROR);
+        long newTrendsId = trends.getId();
+
+        // 存储上传的朋友圈图片（Gitee 仓库）
+        try {
+            List<String> imgUrlList = uploadService.uploadImg(files, newTrendsId);
+            String imgsJson = GSON.toJson(imgUrlList);
+            Post newPort = new Post();
+            newPort.setId(newTrendsId);
+            newPort.setImg(imgsJson);
+            trendsService.updateById(trends);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return ResponseResult.success(newTrendsId);
+
     }
 
 
