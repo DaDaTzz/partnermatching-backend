@@ -92,6 +92,7 @@ public class PostController {
         ThrowUtils.throwIf(!result, ErrorCode.PARAMS_ERROR);
         long newPostId = post.getId();
 
+
         // 存博文图片
         try {
             List<String> imgUrlList = uploadService.uploadImg(files, newPostId);

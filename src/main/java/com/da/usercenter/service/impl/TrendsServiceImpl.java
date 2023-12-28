@@ -28,6 +28,11 @@ import java.util.List;
 public class TrendsServiceImpl extends ServiceImpl<TrendsMapper, Trends>
     implements TrendsService{
 
+    /**
+     * 拼接查询条件
+     * @param trendsQueryRequest
+     * @return
+     */
     @Override
     public QueryWrapper<Trends> getQueryWrapper(TrendsQueryRequest trendsQueryRequest) {
         QueryWrapper<Trends> queryWrapper = new QueryWrapper<>();
@@ -52,6 +57,11 @@ public class TrendsServiceImpl extends ServiceImpl<TrendsMapper, Trends>
     }
 
 
+    /**
+     * 参数校验
+     * @param trends
+     * @param add
+     */
     @Override
     public void validTrends(Trends trends, boolean add) {
         if (trends == null) {

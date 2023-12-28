@@ -7,6 +7,8 @@ import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.exception.ThrowUtils;
+import com.da.usercenter.model.dto.post.PostEditRequest;
+import com.da.usercenter.model.dto.trends.TrendsEditRequest;
 import com.da.usercenter.model.dto.trends.TrendsQueryRequest;
 import com.da.usercenter.model.entity.Post;
 import com.da.usercenter.model.entity.Trends;
@@ -129,25 +131,40 @@ public class TrendsController {
 
 
     /**
-     * 根据 id 删除动态
+     * 删除动态（可根据动态的 id，用户 id删除）
      *
      * @param request
      * @param trends
      * @return
      */
     @PostMapping("/delete")
-    public ResponseResult<Boolean> deleteTrendsById(HttpServletRequest request, Trends trends) {
+    public ResponseResult<Boolean> deleteTrendsById(HttpServletRequest request, @RequestBody Trends trends) {
         User currentUser = userService.getCurrentUser(request);
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
         long currentUserId = currentUser.getId();
-        Long trendsUserId = trends.getUserId();
-        // 判断是否存在
+        Long userId = trends.getUserId();
+        // ============== 根据 用户 id 删除==================
+        if(userId != null && userId > 0){
+            LambdaQueryWrapper<Trends> trendsLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            trendsLambdaQueryWrapper.eq(Trends::getUserId, userId);
+            List<Trends> trendsList = trendsService.list(trendsLambdaQueryWrapper);
+            if(trendsList == null || trendsList.size() == 0){
+                throw new BusinessException(ErrorCode.PARAMS_ERROR);
+            }
+            boolean res = trendsService.remove(trendsLambdaQueryWrapper);
+            if(!res){
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+            }
+            return ResponseResult.success(true);
+        }
+        // ============== 根据 动态 id 删除==================
         Trends t = trendsService.getById(trends.getId());
         if (t == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        Long trendsUserId = t.getUserId();
         // 仅发动态本人或管理员可以删除动态
         if (currentUserId != trendsUserId && currentUser.getType() != 1) {
             throw new BusinessException(ErrorCode.NO_AUTH);
@@ -197,6 +214,38 @@ public class TrendsController {
         return ResponseResult.success(newTrendsId);
 
     }
+
+
+
+    /**
+     * 编辑（更新）
+     *
+     * @param trendsEditRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/edit")
+    public ResponseResult<Boolean> editTrends(@RequestBody TrendsEditRequest trendsEditRequest, HttpServletRequest request) {
+        if (trendsEditRequest == null || trendsEditRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Trends trends = new Trends();
+        BeanUtils.copyProperties(trendsEditRequest, trends);
+        // 参数校验
+        trendsService.validTrends(trends, false);
+        User loginUser = userService.getCurrentUser(request);
+        long id = trendsEditRequest.getId();
+        // 判断是否存在
+        Trends oldTrends = trendsService.getById(id);
+        ThrowUtils.throwIf(oldTrends == null, ErrorCode.PARAMS_ERROR);
+        // 仅本人或管理员可编辑
+        if (!oldTrends.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        boolean result = trendsService.updateById(trends);
+        return ResponseResult.success(result);
+    }
+
 
 
 }
