@@ -7,10 +7,8 @@ import com.da.usercenter.common.ErrorCode;
 import com.da.usercenter.common.ResponseResult;
 import com.da.usercenter.exception.BusinessException;
 import com.da.usercenter.exception.ThrowUtils;
-import com.da.usercenter.model.dto.post.PostEditRequest;
 import com.da.usercenter.model.dto.trends.TrendsEditRequest;
 import com.da.usercenter.model.dto.trends.TrendsQueryRequest;
-import com.da.usercenter.model.entity.Post;
 import com.da.usercenter.model.entity.Trends;
 import com.da.usercenter.model.entity.User;
 import com.da.usercenter.model.entity.UserFollows;
@@ -21,7 +19,6 @@ import com.da.usercenter.service.UserFollowsService;
 import com.da.usercenter.service.UserService;
 import com.google.gson.Gson;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -47,7 +44,7 @@ public class TrendsController {
 
 
     /**
-     * 查询自己以及关注的用户的朋友圈
+     * 查询自己以及关注的用户的动态
      *
      * @param request
      * @return
@@ -104,7 +101,7 @@ public class TrendsController {
     }
 
     /**
-     * 分页获取用户动态信息
+     * 分页获取所有用户动态
      *
      * @param request
      * @return
@@ -116,13 +113,9 @@ public class TrendsController {
         // 限制爬虫
         ThrowUtils.throwIf(size > 60, ErrorCode.PARAMS_ERROR);
         User currentUser = userService.getCurrentUser(request);
-        if (currentUser == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN);
-        }
+        ThrowUtils.throwIf(currentUser == null, ErrorCode.NOT_LOGIN);
         // 只有管理员有权限查询所有用户动态信息
-        if (currentUser.getType() != 1) {
-            throw new BusinessException(ErrorCode.NO_AUTH);
-        }
+        ThrowUtils.throwIf(currentUser.getType() != 1, ErrorCode.NO_AUTH);
         QueryWrapper<Trends> queryWrapper = trendsService.getQueryWrapper(trendsQueryRequest);
         Page<Trends> trendsPage = trendsService.page(new Page<>(current, size), queryWrapper);
         return ResponseResult.success(trendsPage);
@@ -140,9 +133,7 @@ public class TrendsController {
     @PostMapping("/delete")
     public ResponseResult<Boolean> deleteTrendsById(HttpServletRequest request, @RequestBody Trends trends) {
         User currentUser = userService.getCurrentUser(request);
-        if (currentUser == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN);
-        }
+        ThrowUtils.throwIf(currentUser == null, ErrorCode.NOT_LOGIN);
         long currentUserId = currentUser.getId();
         Long userId = trends.getUserId();
         // ============== 根据 用户 id 删除==================
@@ -150,25 +141,17 @@ public class TrendsController {
             LambdaQueryWrapper<Trends> trendsLambdaQueryWrapper = new LambdaQueryWrapper<>();
             trendsLambdaQueryWrapper.eq(Trends::getUserId, userId);
             List<Trends> trendsList = trendsService.list(trendsLambdaQueryWrapper);
-            if(trendsList == null || trendsList.size() == 0){
-                throw new BusinessException(ErrorCode.PARAMS_ERROR);
-            }
+            ThrowUtils.throwIf(trendsList == null || trendsList.size() == 0, ErrorCode.PARAMS_ERROR);
             boolean res = trendsService.remove(trendsLambdaQueryWrapper);
-            if(!res){
-                throw new BusinessException(ErrorCode.SYSTEM_ERROR);
-            }
+            ThrowUtils.throwIf(!res, ErrorCode.SYSTEM_ERROR);
             return ResponseResult.success(true);
         }
         // ============== 根据 动态 id 删除==================
         Trends t = trendsService.getById(trends.getId());
-        if (t == null) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(t == null, ErrorCode.PARAMS_ERROR);
         Long trendsUserId = t.getUserId();
         // 仅发动态本人或管理员可以删除动态
-        if (currentUserId != trendsUserId && currentUser.getType() != 1) {
-            throw new BusinessException(ErrorCode.NO_AUTH);
-        }
+        ThrowUtils.throwIf(currentUserId != trendsUserId && currentUser.getType() != 1, ErrorCode.NO_AUTH);
         boolean result = trendsService.removeById(trends.getId());
         return ResponseResult.success(result);
     }
@@ -185,9 +168,7 @@ public class TrendsController {
     @PostMapping("/add")
     public ResponseResult<Long> addTrends(@RequestParam("file") MultipartFile[] files, @RequestParam("content") String content, HttpServletRequest request) {
         User currentUser = userService.getCurrentUser(request);
-        if (currentUser == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN);
-        }
+        ThrowUtils.throwIf(currentUser == null, ErrorCode.NOT_LOGIN);
         Trends trends = new Trends();
         Trends t = new Trends();
         t.setContent(content);
@@ -200,7 +181,7 @@ public class TrendsController {
         ThrowUtils.throwIf(!result, ErrorCode.PARAMS_ERROR);
         long newTrendsId = trends.getId();
 
-        // 存储上传的朋友圈图片（Gitee 仓库）
+        // 存储上传的朋友圈图片（上传至 Gitee 仓库）
         try {
             List<String> imgUrlList = uploadService.uploadImg(files, newTrendsId);
             String imgsJson = GSON.toJson(imgUrlList);
@@ -226,9 +207,7 @@ public class TrendsController {
      */
     @PostMapping("/edit")
     public ResponseResult<Boolean> editTrends(@RequestBody TrendsEditRequest trendsEditRequest, HttpServletRequest request) {
-        if (trendsEditRequest == null || trendsEditRequest.getId() <= 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
+        ThrowUtils.throwIf(trendsEditRequest == null || trendsEditRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
         Trends trends = new Trends();
         BeanUtils.copyProperties(trendsEditRequest, trends);
         // 参数校验
