@@ -239,15 +239,9 @@ public class TrendsController {
         Trends oldTrends = trendsService.getById(id);
         ThrowUtils.throwIf(oldTrends == null, ErrorCode.PARAMS_ERROR);
         // 仅本人或管理员可编辑
-        if (!oldTrends.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH);
-        }
-        boolean result = trendsService.updateById(trends);
-        return ResponseResult.success(result);
+        ThrowUtils.throwIf(!oldTrends.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser), ErrorCode.NO_AUTH);
+        return ResponseResult.success(trendsService.updateById(trends));
     }
-
-
-
 
 
 
