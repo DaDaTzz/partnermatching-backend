@@ -204,10 +204,10 @@ public class TrendsController {
         try {
             List<String> imgUrlList = uploadService.uploadImg(files, newTrendsId);
             String imgsJson = GSON.toJson(imgUrlList);
-            Post newPort = new Post();
-            newPort.setId(newTrendsId);
-            newPort.setImg(imgsJson);
-            trendsService.updateById(trends);
+            Trends newTrends = new Trends();
+            newTrends.setId(newTrendsId);
+            newTrends.setImg(imgsJson);
+            trendsService.updateById(newTrends);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -245,6 +245,8 @@ public class TrendsController {
         boolean result = trendsService.updateById(trends);
         return ResponseResult.success(result);
     }
+
+
 
 
 
