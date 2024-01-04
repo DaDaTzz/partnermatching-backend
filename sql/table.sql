@@ -288,7 +288,7 @@ CREATE TABLE `orders`
 
 
 /**
-  朋友圈表
+  动态表
  */
 CREATE TABLE `trends`
 (
@@ -323,6 +323,9 @@ CREATE TABLE `trends_thumb`
   AUTO_INCREMENT = 183
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci COMMENT ='动态点赞';
+
+
+
 
 
 

@@ -24,7 +24,7 @@ public class Knife4jConfiguration {
                 .apiInfo(new ApiInfoBuilder()
                         //.title("swagger-bootstrap-ui-demo RESTful APIs")
                         .description("# swagger-bootstrap-ui-demo RESTful APIs")
-                        .termsOfServiceUrl("http://www.xx.com/")
+                        .termsOfServiceUrl("http://www.iyaya.com/")
                         .contact("1349190697@qq.com")
                         .version("1.0")
                         .build())
