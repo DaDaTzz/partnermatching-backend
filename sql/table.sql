@@ -1,3 +1,7 @@
+create database user_center;
+
+use user_center;
+
 /**
   评论点赞表
  */
